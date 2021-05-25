@@ -1,6 +1,6 @@
 """ Dynamic """
 
-function dynamic(m::LinearDynamicModel, x::AbstractVector, u::AbstarctVector)
+function dynamic(m::LinearDynamicModel, x::AbstractVector, u::AbstractVector)
     return m.A*x + m.B*u + cholesky(m.W).L*randn(rng, Float64, size(m.W, 1))
 end
 

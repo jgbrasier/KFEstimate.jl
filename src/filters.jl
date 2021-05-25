@@ -1,8 +1,8 @@
 """ Linear Kalman Filter Structure """
 
-abstract type AbstactFilter end
+abstract type AbstractFilter end
 
 struct KalmanFilter <: AbstractFilter
-    d::LinearDynamicsModel
+    d::LinearDynamicModel
     o::LinearObservationModel
 end
