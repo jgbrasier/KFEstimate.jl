@@ -4,7 +4,7 @@ function dynamic(m::LinearDynamicModel, x::AbstractVector, u::AbstarctVector)
     return m.A*x + m.B*u + cholesky(m.W).L*randn(rng, Float64, size(m.W, 1))
 end
 
-function predict(m::LinearDynamicModel, s::State)
+function prediction(m::LinearDynamicModel, s::State)
     xp = m.A*s.x + m.B*u # predicted state prior
     Pp = m.A*s.P*m.A' + m.W # a priori state covariance
     return State(xp, Pp)
@@ -32,5 +32,5 @@ end
 function pre_fit(m::LinearObservationModel, R::AbstractMatrix, s::State, y::AbstractVector)
     v = y - m.H*s.x # measurement pre fit residual
     S = m.H*s.P*m.H' + R # pre fit residual covariance
-    return v'*inv(S)*v + log(det(2*π*S))
+    return v'*inv(S)*v + log(det(2*π*S)) # log likelihood for a state k
 end

@@ -29,7 +29,9 @@ export
 include("filters.jl")
 
 export
-    simulate
+    run_simulation
+    run_filter
+    unpack
 include("run.jl")
 
 end
