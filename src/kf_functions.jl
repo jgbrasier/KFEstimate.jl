@@ -1,10 +1,10 @@
 """ Dynamic """
 
 function dynamic(m::LinearDynamicModel, x::AbstractVector, u::AbstractVector)
-    return m.A*x + m.B*u + cholesky(m.W).L*randn(rng, Float64, size(m.W, 1))
+    return m.A*x + m.B*u + cholesky(m.W).L*randn(size(m.W, 1))
 end
 
-function prediction(m::LinearDynamicModel, s::State)
+function prediction(m::LinearDynamicModel, s::State, u::AbstractVector)
     xp = m.A*s.x + m.B*u # predicted state prior
     Pp = m.A*s.P*m.A' + m.W # a priori state covariance
     return State(xp, Pp)
@@ -13,11 +13,7 @@ end
 """ Observation """
 
 function observation(m::LinearObservationModel, R::AbstractMatrix, x::AbstractVector)
-    if size(R) > (1, 1)
-        return m.H*x + cholesky(R).L*randn(rng, Float64, size(m.V, 1))
-    else
-        return m.H*x + R*randn(rng, Float64, size(m.V, 1))
-    end
+    return m.H*x + cholesky(R).L*randn(size(R, 1))
 end
 
 function correction(m::LinearObservationModel, R::AbstractMatrix, s::State, y::AbstractVector)

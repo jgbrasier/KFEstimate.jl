@@ -11,7 +11,7 @@ end
 """ dynamic models """
 abstract type DynamicModel end
 
-struct LinearDynamicModel{a<:AbstractMatrix, b<: AbstractMatrix, q<:AbstractMatrix} <:DynamicModel
+struct LinearDynamicModel{a<:AbstractMatrix, b<: AbstractMatrix, q<:Symmetric} <:DynamicModel
     A::a
     B::b
     W::q
@@ -28,8 +28,4 @@ abstract type ObservationModel end
 struct LinearObservationModel{c<:AbstractMatrix} <:ObservationModel
     # noise covariance R is not defined because it is a parameter to estimate
     H::c
-end
-
-function LinearObservationModel(H::AbstractMatrix)
-    return LinearObservationModel(H)
 end

@@ -6,6 +6,8 @@ using LinearAlgebra
 using ForwardDiff
 using Zygote
 using Random
+using Revise
+using Plots
 import Random: rand
 
 export
@@ -35,4 +37,9 @@ export
     unpack
 include("run.jl")
 
+export
+    unpack,
+    likelihood,
+    compute_loss
+include("utils.jl")
 end
