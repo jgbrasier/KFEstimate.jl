@@ -8,6 +8,8 @@ using Zygote
 using Random
 using Revise
 using Plots
+using ProgressBars
+using Flux.Optimise
 import Random: rand
 
 export
@@ -45,7 +47,7 @@ include("filters.jl")
 export
     run_simulation,
     run_filter,
-    unpack
+    run_estimation
 include("run.jl")
 
 export

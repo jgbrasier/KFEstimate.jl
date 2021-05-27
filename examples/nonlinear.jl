@@ -1,5 +1,6 @@
 using Revise, KFEstimate
 using LinearAlgebra, Plots
+using Flux.Optimise
 pathof(KFEstimate)
 
 ## pendulum simulation
@@ -45,9 +46,18 @@ plot!(time_step, μ[2:end, 1], label = "measured θ", legend=:bottomleft)
 plot!(time_step, μ[2:end, 2], label = "estimated dθ", legend=:bottomleft)
 xlabel!("time step (t)")
 
-## Noise covariance estimation
+## Noise covariance loss
 
 R_range = 5:0.1:15
 loss = compute_loss(ekf, R_range, s0, action_sequence, sim_measurements)
 
 plot(R_range, loss)
+
+## Noise covariance estimation
+
+opt = Optimise.ADAM(0.3)
+n_epochs = 20
+R0 = 8.0*Matrix{Float64}(I, 1, 1)
+history = run_estimation(ekf, opt, R0, s0, n_epochs, action_sequence, sim_measurements)
+plot(1:n_epochs, history, label=["loss" "R"])
+##

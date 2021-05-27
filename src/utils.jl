@@ -22,12 +22,13 @@ function likelihood(filter::AbstractFilter, R:: AbstractMatrix, state_beliefs::A
     # drop initial s0 belief
     state_beliefs = state_beliefs[2:end]
     @assert length(state_beliefs) == length(measurement_history)
+    N = length(measurement_history)
     # initialize log likelihood
     l = R[1]
     for (k, (s, y, u)) in enumerate(zip(state_beliefs, measurement_history, action_history))
         l += 1/2*pre_fit(filter.o, R, s, y)
     end
-    return l
+    return l/N
 end
 
 function compute_loss(filter::AbstractFilter, r_range::StepRangeLen, s0::State,
@@ -35,11 +36,10 @@ function compute_loss(filter::AbstractFilter, r_range::StepRangeLen, s0::State,
     # compute loss (log-likelihood) for a given range of noise covariances
     loss = []
     @assert length(action_history) == length(measurement_history)
-    N = length(measurement_history)
     for r in r_range
         R = r*Matrix{Float64}(I, 1, 1)
         filtered_states = run_filter(filter, R, s0, action_history, measurement_history)
-        l = likelihood(filter, R, filtered_states, action_history, measurement_history)/N
+        l = likelihood(filter, R, filtered_states, action_history, measurement_history)
         push!(loss, l)
     end
     return loss
