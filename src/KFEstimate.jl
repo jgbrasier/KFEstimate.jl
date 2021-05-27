@@ -14,8 +14,10 @@ export
     State,
     DynamicModel,
     LinearDynamicModel,
+    NonLinearDynamicModel,
     ObservationModel,
-    LinearObservationModel
+    LinearObservationModel,
+    NonLinearObservationModel
 include("models.jl")
 
 export
@@ -27,8 +29,17 @@ export
 include("kf_functions.jl")
 
 export
+    dynamic,
+    predict,
+    observation,
+    correction,
+    pre_fit
+include("ekf_functions.jl")
+
+export
     AbstractFilter,
-    KalmanFilter
+    KalmanFilter,
+    ExtendedKalmanFilter
 include("filters.jl")
 
 export

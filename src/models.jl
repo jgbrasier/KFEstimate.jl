@@ -21,6 +21,15 @@ function LinearDynamicModel(A::AbstractMatrix, B::AbstractMatrix, W::AbstractMat
     return LinearDynamicModel(A, B, Symmetric(W))
 end
 
+struct NonLinearDynamicModel{f<:Function, q<:Symmetric} <:DynamicModel
+    F::f
+    W::q
+end
+
+function NonLinearDynamicModel(F::Function, W::AbstractMatrix)
+    return NonLinearDynamicModel(F, Symmetric(W))
+end
+
 """ observation models"""
 abstract type ObservationModel end
 
@@ -28,4 +37,9 @@ abstract type ObservationModel end
 struct LinearObservationModel{c<:AbstractMatrix} <:ObservationModel
     # noise covariance R is not defined because it is a parameter to estimate
     H::c
+end
+
+struct NonLinearObservationModel{h<:Function} <:ObservationModel
+    # noise covariance R is not defined because it is a parameter to estimate
+    H::h
 end
