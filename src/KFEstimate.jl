@@ -13,14 +13,11 @@ using Flux.Optimise
 import Random: rand
 
 export
-    State,
-    DynamicModel,
-    LinearDynamicModel,
-    NonLinearDynamicModel,
-    ObservationModel,
-    LinearObservationModel,
-    NonLinearObservationModel
-include("models.jl")
+    AbstractFilter,
+    KalmanFilter,
+    ExtendedKalmanFilter,
+    State
+include("filters.jl")
 
 export
     dynamic,
@@ -29,30 +26,17 @@ export
     correction,
     pre_fit
 include("kf_functions.jl")
-
-export
-    dynamic,
-    predict,
-    observation,
-    correction,
-    pre_fit
 include("ekf_functions.jl")
-
-export
-    AbstractFilter,
-    KalmanFilter,
-    ExtendedKalmanFilter
-include("filters.jl")
 
 export
     run_simulation,
     run_filter,
-    run_estimation
+    run_linear_estimation
 include("run.jl")
 
 export
     unpack,
     likelihood,
-    compute_loss
+    compute_noise_loss
 include("utils.jl")
 end
