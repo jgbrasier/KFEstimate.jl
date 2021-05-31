@@ -12,13 +12,13 @@ Q = 0.01*Matrix{Float64}(I, 2, 2)
 
 # observation model, assume we can noisily measure position
 H = [1.0 0]
-R = 0.5*Matrix{Float64}(I, 1, 1)
+R = 10.0*Matrix{Float64}(I, 1, 1)
 
-kf = KalmanFilter(A, B, Q, H, R_gt)
+kf = KalmanFilter(A, B, Q, H, R)
 
 # run simulation
 time_step = 0.0:dt:10
-x0 = [0.0, 1.0]
+x0 = [0.0; 10.0]
 action_sequence = [[0.0; 0.0] for t in time_step]
 sim_states, sim_measurements = run_simulation(kf, x0, action_sequence)
 # run kalman filter
@@ -84,6 +84,7 @@ estimated_kf = KalmanFilter(A_est, B, Q, H, R)
 history = run_linear_estimation(estimated_kf, opt, n_epochs, s0, action_sequence, sim_measurements)
 
 ##
+using Zygote
 estimated_kf = KalmanFilter(A_est, B, Q, H, R)
 gs = gradient(f -> likelihood(f, filtered_states, action_sequence, sim_measurements), estimated_kf)[1][]
 
