@@ -31,6 +31,7 @@ include("ekf_functions.jl")
 export
     run_simulation,
     run_filter,
+    run_noise_estimation,
     run_linear_estimation
 include("run.jl")
 

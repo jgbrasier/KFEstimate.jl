@@ -49,11 +49,9 @@ n_epochs = 20
 R_est = 7.0*Matrix{Float64}(I, 1, 1)
 estimated_kf = KalmanFilter(A, B, Q, H, R_est)
 history = run_noise_estimation(estimated_kf, opt, n_epochs, s0, action_sequence, sim_measurements)
-p1 = plot(1:n_epochs, history[:, 1], label="loss")
-p2 = plot(1:n_epochs, history[:, 2], label="R")
-plot(p1, p2)
+plot(1:n_epochs, history["loss"], label="loss")
 
-R = history[argmin(history[:, 1]), 2]
+R = history["R"][argmin(history["loss"])]
 
 ## Process matrix diagonal coefficients loss
 
