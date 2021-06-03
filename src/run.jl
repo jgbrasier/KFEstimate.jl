@@ -31,23 +31,6 @@ function run_filter(filter::AbstractFilter, s0::State, action_history::AbstractA
     return states
 end
 
-function init_history(filter::AbstractFilter, n_epochs::Int)
-    history = Dict("loss"=>[])
-    for field in fieldnames(typeof(filter))
-        history[String(field)] = []
-    end
-    return history
-end
-
-function log_kf_history!(hist::Dict, filter::KalmanFilter, l::Float64, epoch::Int)
-    push!(hist["loss"], l)
-    push!(hist["A"], filter.A)
-    push!(hist["B"], filter.B)
-    push!(hist["Q"], filter.Q)
-    push!(hist["H"], filter.H)
-    push!(hist["R"], filter.R)
-end
-
 function run_noise_estimation(filter::AbstractFilter, opt, n_epochs::Integer, s0::State, action_history::AbstractArray,
     measurement_history::AbstractArray)
     """
@@ -69,17 +52,47 @@ end
 function run_linear_estimation(filter::KalmanFilter, opt, n_epochs::Integer, s0::State, action_history::AbstractArray,
     measurement_history::AbstractArray)
     """
-    Run a SGD type optimisation on log-likelihood of noise covariance, with initial estimate R0.
+    Run a SGD type optimisation on log-likelihood of linear model, with initial state estimate s0.
     """
     history = init_history(filter) # [loss, A, B, Q, H, R]
-    epochs = 1:n_epochs
     @assert length(action_history) == length(measurement_history)
-    for e in ProgressBar(epochs)
-        filtered_states = run_filter(filter, s0, action_history, measurement_history)
-        l = likelihood(filter, filtered_states, action_history, measurement_history)
-        gs = gradient(f -> likelihood(f, filtered_states, action_history, measurement_history), filter)[1][]
-        update!(opt, filter.A, gs[:A])
-        log_history!(history, filter, l)
+    states = [s0]
+    for (u, y) in ProgressBar(zip(action_history, measurement_history))
+        sp = prediction(filter, states[end], u)
+        sn = correction(filter, sp, y)
+        l = train_state(filter, opt, n_epochs, states[end], u, y)
+        log_kf_history!(history, filter, l)
+        push!(states, sn)
+    end
+    return history, states
+end
+
+""" Run Utils """
+# these are local (private functions) not exported by KFEstinate.jl
+
+function init_history(filter::AbstractFilter)
+    history = Dict("loss"=>[])
+    for field in fieldnames(typeof(filter))
+        history[String(field)] = []
     end
     return history
+end
+
+function log_kf_history!(hist::Dict, filter::KalmanFilter, l::Float64)
+    push!(hist["loss"], [l])
+    push!(hist["A"], copy(filter.A))
+    push!(hist["B"], copy(filter.B))
+    push!(hist["Q"], copy(filter.Q))
+    push!(hist["H"], copy(filter.H))
+    push!(hist["R"], copy(filter.R))
+end
+
+function train_state(filter::KalmanFilter, opt, n_epochs::Integer, s::State, u::AbstractVector, y::AbstractVector)
+    l = 0.0
+    for i in 1:n_epochs
+        l = step_loss(filter, s, u, y)
+        grads = gradient(f -> step_loss(f, s, u, y), filter)[1][]
+        update!(opt, filter.A, grads[:A])
+    end
+    return l
 end

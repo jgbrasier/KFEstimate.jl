@@ -17,7 +17,18 @@ function unpack(states_history::Vector{<:State};
     return μ, Σ
 end
 
-function likelihood(filter::AbstractFilter, state_beliefs::AbstractArray,
+function unpack_history(history::Dict)
+    res = Dict()
+    for key in keys(history)
+        res[key] = zeros(size(history[key][end], 1), size(history[key][end], 2), length(history[key]))
+        for i in 1:length(history[key])
+            res[key][:, :, i] = history[key][i]
+        end
+    end
+    return res
+end
+
+function noise_likelihood(filter::AbstractFilter, state_beliefs::AbstractArray,
     action_history::AbstractArray, measurement_history::AbstractArray)
     # drop initial s0 belief
     state_beliefs = state_beliefs[2:end]
@@ -27,7 +38,7 @@ function likelihood(filter::AbstractFilter, state_beliefs::AbstractArray,
     # l = o.R[1]
     l=0.0
     for (k, (s, y, u)) in enumerate(zip(state_beliefs, measurement_history, action_history))
-        l += 1/2*pre_fit(filter, s, u, y)
+        l += pre_fit(filter, s, u, y)
     end
     return l
 end
@@ -41,7 +52,7 @@ function compute_noise_loss(filter::AbstractFilter, r_range::StepRangeLen, s0::S
         R = Symmetric(r*Matrix{Float64}(I, 1, 1))
         filter.R = R
         filtered_states = run_filter(filter, s0, action_history, measurement_history)
-        l = likelihood(filter, filtered_states, action_history, measurement_history)
+        l = noise_likelihood(filter, filtered_states, action_history, measurement_history)
         push!(loss, l)
     end
     return loss

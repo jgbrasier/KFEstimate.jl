@@ -25,8 +25,16 @@ export
     observation,
     correction,
     pre_fit
-include("kf_functions.jl")
 include("ekf_functions.jl")
+
+export
+    dynamic,
+    predict,
+    observation,
+    correction,
+    pre_fit,
+    step_loss
+include("kf_functions.jl")
 
 export
     run_simulation,
@@ -37,6 +45,7 @@ include("run.jl")
 
 export
     unpack,
+    unpack_history,
     likelihood,
     compute_noise_loss
 include("utils.jl")
