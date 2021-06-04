@@ -56,7 +56,7 @@ R = history["R"][argmin(history["loss"])]
 # for each state k, perform gradient descent on process log-likelihood
 opt = Optimise.ADAM(0.001)
 n_epochs = 10
-A_est = randn(3, 3) # estimation of process matrix
+A_est = [θ_1 θ_2 θ_3; 0.0 θ_1 θ_2; 0.0 0.0 θ_1]
 estimated_kf = KalmanFilter(A_est, B, Q, H, R)
 history = run_linear_estimation(estimated_kf, opt, n_epochs, s0, action_sequence, sim_measurements)
 # grads = gradient(f -> loss(f, s0, action_sequence[1], sim_measurements[1]), estimated_kf)[1][]
