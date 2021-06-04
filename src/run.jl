@@ -64,7 +64,7 @@ function run_linear_estimation(filter::KalmanFilter, opt, n_epochs::Integer, s0:
         log_kf_history!(history, filter, l)
         push!(states, sn)
     end
-    return history, states
+    return history
 end
 
 """ Run Utils """

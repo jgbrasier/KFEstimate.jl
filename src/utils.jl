@@ -28,7 +28,7 @@ function unpack_history(history::Dict)
     return res
 end
 
-function noise_likelihood(filter::AbstractFilter, state_beliefs::AbstractArray,
+function likelihood(filter::AbstractFilter, state_beliefs::AbstractArray,
     action_history::AbstractArray, measurement_history::AbstractArray)
     # drop initial s0 belief
     state_beliefs = state_beliefs[2:end]
