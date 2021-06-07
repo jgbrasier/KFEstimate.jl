@@ -91,6 +91,8 @@ function train_state(filter::KalmanFilter, opt, n_epochs::Integer, s::State, u::
     l = 0.0
     for i in 1:n_epochs
         l = step_loss(filter, s, u, y)
+        # g = A_grad(filter, s, u, y)
+        # update!(opt, filter.A, g)
         grads = gradient(f -> step_loss(f, s, u, y), filter)[1][]
         update!(opt, filter.A, grads[:A])
     end
