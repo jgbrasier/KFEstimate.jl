@@ -10,6 +10,7 @@ using Revise
 using Plots
 using ProgressBars
 using Flux.Optimise
+using Statistics
 import Random: rand
 
 export
@@ -33,7 +34,8 @@ export
     observation,
     correction,
     pre_fit,
-    step_loss
+    step_loss,
+    A_grad
 include("kf_functions.jl")
 
 export
