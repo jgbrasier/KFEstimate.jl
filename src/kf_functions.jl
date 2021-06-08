@@ -30,15 +30,3 @@ function pre_fit(kf::KalmanFilter, s::State, u::AbstractVector, y::AbstractVecto
     S = kf.H*s.P*kf.H' + kf.R # pre fit residual covariance
     return v'*inv(S)*v + log(det(2*π*S)) # log likelihood for a state k
 end
-
-function step_loss(kf::KalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
-    x_hat = kf.A*s.x + kf.B*u # predicted state prior
-    P_hat = kf.A*s.P*kf.A' + kf.Q # a priori state covariance
-    v = y - kf.H*s.x # measurement pre fit residual
-    S = kf.H*s.P*kf.H' + kf.R # pre fit residual covariance
-    K = s.P*kf.H'*inv(S) # Kalman gain
-    x_post = s.x + K*v
-    y_post = kf.H*x_post
-    return -(y-y_post)'*kf.R*(y-y_post) + (x_post-x_hat)'*P_hat*(x_post-x_hat)
-    # return v'*filter.R*v + (x_post-x_hat)'*P_hat*(x_post-x_hat)
-end

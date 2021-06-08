@@ -27,22 +27,12 @@ export
     correction,
     pre_fit
 include("ekf_functions.jl")
-
-export
-    dynamic,
-    predict,
-    observation,
-    correction,
-    pre_fit,
-    step_loss,
-    linear_grad
 include("kf_functions.jl")
 
 export
     run_simulation,
     run_filter,
     run_noise_estimation,
-    run_linear_estimation
 include("run.jl")
 
 export

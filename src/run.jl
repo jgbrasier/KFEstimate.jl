@@ -49,36 +49,6 @@ function run_noise_estimation(filter::AbstractFilter, opt, n_epochs::Integer, s0
     return history
 end
 
-function run_linear_estimation(filter::KalmanFilter, opt, n_epochs::Integer, s0::State, action_history::AbstractArray,
-    measurement_history::AbstractArray)
-    """
-    Run a SGD type optimisation on log-likelihood of linear model, with initial state estimate s0.
-    """
-    history = init_history(filter) # [loss, A, B, Q, H, R]
-    @assert length(action_history) == length(measurement_history)
-    states = [s0]
-    s_learned = [s0]
-    for (u, y) in ProgressBar(zip(action_history, measurement_history))
-        sp = prediction(filter, states[end], u)
-        sn = correction(filter, sp, y)
-        x_learn = [0.0 0.0]
-        for i in 1:n_epochs
-            s = s_learned[end]
-            L_grad, A_grad = linear_grad(filter, s, u, y)
-            x_learn = s.x - 0.01*L_grad
-            filter.A = filter.A - 0.000001*A_grad
-            # l = step_loss(filter, s, u, y)
-            # grads = gradient(f -> step_loss(f, s, u, y), filter)[1][]
-            # update!(opt, filter.A, grads[:A])
-        end
-        s_learn = State(x_learn, sn.P)
-        # s_learn = train_state(filter, opt, n_epochs, s_learned[end], u, y)
-        log_kf_history!(history, filter, 0.0)
-        push!(states, sn)
-        push!(s_learned, s_learn)
-    end
-    return history
-end
 
 """ Run Utils """
 # these are local (private functions) not exported by KFEstinate.jl

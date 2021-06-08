@@ -21,7 +21,7 @@ kf = KalmanFilter(A, B, Q, H, R)
 # run simulation
 time_step = 0.0:1000
 x0 = [0.0; 0.0; 0.0]
-action_sequence = [[exp(-0.01*t)] for t in time_step]
+action_sequence = [[exp(-0.01*(t-1))] for t in time_step]
 sim_states, sim_measurements = run_simulation(kf, x0, action_sequence)
 # run kalman filter
 P0 = Matrix{Float64}(I, 3, 3)
@@ -69,6 +69,7 @@ function run_gradient(filter, action_history, measurement_history, Σ_history)
         x_grad = x_grads[end]
         Ahat = Ahats[end]
         for i in 1:20
+            # print(x_grad, "\n")
             ϵx = x_grad - (Ahat*x_grad + filter.B*u)
             ϵy = y - filter.H*x_grad
             dμ = p_grad*ϵx - filter.H'*filter.R*ϵy
@@ -76,6 +77,7 @@ function run_gradient(filter, action_history, measurement_history, Σ_history)
             Ahat_grad = p*ϵx*x_grad'
 
             Ahat += 0.0000005*Ahat_grad
+            # println(ϵx, ϵy, dμ, "\n")
         end
         push!(x_grads, x_grad)
         push!(Ahats, Ahat)
