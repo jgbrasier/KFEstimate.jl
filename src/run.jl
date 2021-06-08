@@ -57,12 +57,25 @@ function run_linear_estimation(filter::KalmanFilter, opt, n_epochs::Integer, s0:
     history = init_history(filter) # [loss, A, B, Q, H, R]
     @assert length(action_history) == length(measurement_history)
     states = [s0]
+    s_learned = [s0]
     for (u, y) in ProgressBar(zip(action_history, measurement_history))
         sp = prediction(filter, states[end], u)
         sn = correction(filter, sp, y)
-        l = train_state(filter, opt, n_epochs, states[end], u, y)
-        log_kf_history!(history, filter, l)
+        x_learn = [0.0 0.0]
+        for i in 1:n_epochs
+            s = s_learned[end]
+            L_grad, A_grad = linear_grad(filter, s, u, y)
+            x_learn = s.x - 0.01*L_grad
+            filter.A = filter.A - 0.000001*A_grad
+            # l = step_loss(filter, s, u, y)
+            # grads = gradient(f -> step_loss(f, s, u, y), filter)[1][]
+            # update!(opt, filter.A, grads[:A])
+        end
+        s_learn = State(x_learn, sn.P)
+        # s_learn = train_state(filter, opt, n_epochs, s_learned[end], u, y)
+        log_kf_history!(history, filter, 0.0)
         push!(states, sn)
+        push!(s_learned, s_learn)
     end
     return history
 end
@@ -88,13 +101,14 @@ function log_kf_history!(hist::Dict, filter::KalmanFilter, l::Float64)
 end
 
 function train_state(filter::KalmanFilter, opt, n_epochs::Integer, s::State, u::AbstractVector, y::AbstractVector)
-    l = 0.0
+    x_learn = 0.0
     for i in 1:n_epochs
-        l = step_loss(filter, s, u, y)
-        # g = A_grad(filter, s, u, y)
-        # update!(opt, filter.A, g)
-        grads = gradient(f -> step_loss(f, s, u, y), filter)[1][]
-        update!(opt, filter.A, grads[:A])
+        L_grad, A_grad = linear_grad(filter, s, u, y)
+        x_learn = s.x - 0.01*L_grad
+        filter.A = filter.A - 0.000001*A_grad
+        # l = step_loss(filter, s, u, y)
+        # grads = gradient(f -> step_loss(f, s, u, y), filter)[1][]
+        # update!(opt, filter.A, grads[:A])
     end
-    return l
+    return State(x_learn, s.P)
 end

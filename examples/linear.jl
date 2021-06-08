@@ -1,25 +1,27 @@
 using Revise, KFEstimate
 using LinearAlgebra, Plots
 using Flux.Optimise
+using ProgressBars
 pathof(KFEstimate)
 ## Normal Kalman Filter
 
 # dynamic model x = [p, v]
 dt = 0.001
 A = [1.0 dt 1/2*dt^2; 0.0 1.0 dt; 0.0 0.0 1.0]
-B = Matrix{Float64}(I, 3, 3)
-Q = 0.1*Matrix{Float64}(I, 3, 3)
+B = [0.0; 0.0; 1.0]
+B = reshape(B, length(B), 1)
+Q = 0.01*Matrix{Float64}(I, 3, 3)
 
 # observation model, assume we can noisily measure position
-H = [0.0 0.0 1.0]
-R = 10.0*Matrix{Float64}(I, 1, 1)
+H = randn(3, 3)
+R = 10.0*Matrix{Float64}(I, 3, 3)
 
 kf = KalmanFilter(A, B, Q, H, R)
 
 # run simulation
 time_step = 0.0:1000
 x0 = [0.0; 0.0; 0.0]
-action_sequence = [[0.0; 0.0; exp(-0.01*t)] for t in time_step]
+action_sequence = [[exp(-0.01*t)] for t in time_step]
 sim_states, sim_measurements = run_simulation(kf, x0, action_sequence)
 # run kalman filter
 P0 = Matrix{Float64}(I, 3, 3)
@@ -54,29 +56,40 @@ R = history["R"][argmin(history["loss"])]
 
 ## Process matrix parameter estimation
 # for each state k, perform gradient descent on process log-likelihood
-opt = Optimise.ADAM(0.0001)
-n_epochs = 20
-θ = randn(3)
-A_est = [θ[1] dt 1/2*dt^2; 0.0 θ[1] dt; 0.0 0.0 θ[1]]
-estimated_kf = KalmanFilter(A_est, B, Q, H, R)
-history = run_linear_estimation(estimated_kf, opt, n_epochs, s0, action_sequence, sim_measurements)
-# grads = gradient(f -> loss(f, s0, action_sequence[1], sim_measurements[1]), estimated_kf)[1][]
 
-history = unpack_history(history)
+Aest = randn(3, 3)
 
-plot(time_step, [history["A"][1, 1, :] history["A"][2, 2, :] history["A"][3, 3, :]], label=["A_11" "A_22" "A_33"])
-plot!(time_step, [history["A"][1, 2, :] history["A"][2, 3, :]], label=["A_12" "A_23"])
-plot!(time_step, history["A"][1, 3, :], label="A_13")
-# plot!(time_step, [A[1, 1]*ones(length(time_step)) A[1, 2]*ones(length(time_step)) A[2, 1]*ones(length(time_step)) A[2, 2]*ones(length(time_step))], ls=[:dash])
+est_kf = KalmanFilter(Aest, B, Q, H, R)
+function run_gradient(filter, action_history, measurement_history, Σ_history)
+    x_grads = [[0.0; 0.0; 0.0]]
+    p_grad = Matrix{Float64}(I, 3, 3)
+    Ahats = [copy(filter.A)]
+    @assert length(action_history) == length(measurement_history)
+    for (u, y, p) in ProgressBar(zip(action_history, measurement_history, Σ_history))
+        x_grad = x_grads[end]
+        Ahat = Ahats[end]
+        for i in 1:20
+            ϵx = x_grad - (Ahat*x_grad + filter.B*u)
+            ϵy = y - filter.H*x_grad
+            dμ = p_grad*ϵx - filter.H'*filter.R*ϵy
+            x_grad -= (0.05*dμ)
+            Ahat_grad = p*ϵx*x_grad'
 
-## Compare results
+            Ahat += 0.0000005*Ahat_grad
+        end
+        push!(x_grads, x_grad)
+        push!(Ahats, Ahat)
+    end
+    return x_grads
+end
 
-est_filtered_states = run_filter(estimated_kf, s0, action_sequence, sim_measurements)
-μ_est, Σ_est = unpack(est_filtered_states)
-# plot
-plot(time_step, [p[2:end] v[2:end] a[2:end]], label = ["simulated p" "simulated v" "simulated a"])
-plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["estimated p" "estimated v" "measured a"])
-plot!(time_step, μ_est[2:end, 1], label = "estimated p with A_est", legend=:bottomright)
-plot!(time_step, μ_est[2:end, 2], label = "estimated v with A_est")
-plot!(time_step, μ_est[2:end, 3], label = "measured a with A_est")
+grad_states = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
+
+pgrad = [x[1] for x in grad_states]
+vgrad = [x[2] for x in grad_states]
+agrad = [x[3] for x in grad_states]
+
+plot(time_step, [p[2:end] v[2:end] a[2:end]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
+plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
+plot!(time_step, [pgrad[2:end] vgrad[2:end] agrad[2:end]], label = ["GD p" "GD v" "GD a"], legend=:bottomright)
 xlabel!("time step (t)")

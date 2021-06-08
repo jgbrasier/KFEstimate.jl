@@ -35,7 +35,7 @@ export
     correction,
     pre_fit,
     step_loss,
-    A_grad
+    linear_grad
 include("kf_functions.jl")
 
 export
