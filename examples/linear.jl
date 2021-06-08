@@ -5,7 +5,7 @@ using ProgressBars
 pathof(KFEstimate)
 ## Normal Kalman Filter
 
-# dynamic model x = [p, v]
+# dynamic model x = [p, v, a]
 dt = 0.001
 A = [1.0 dt 1/2*dt^2; 0.0 1.0 dt; 0.0 0.0 1.0]
 B = [0.0; 0.0; 1.0]
@@ -14,12 +14,12 @@ Q = 0.01*Matrix{Float64}(I, 3, 3)
 
 # observation model, assume we can noisily measure position
 H = randn(3, 3)
-R = 10.0*Matrix{Float64}(I, 3, 3)
+R = 1.0*Matrix{Float64}(I, 3, 3)
 
 kf = KalmanFilter(A, B, Q, H, R)
 
 # run simulation
-time_step = 0.0:1000
+time_step = 0:1000
 x0 = [0.0; 0.0; 0.0]
 action_sequence = [[exp(-0.01*(t-1))] for t in time_step]
 sim_states, sim_measurements = run_simulation(kf, x0, action_sequence)
@@ -62,7 +62,7 @@ Aest = randn(3, 3)
 est_kf = KalmanFilter(Aest, B, Q, H, R)
 function run_gradient(filter, action_history, measurement_history, Σ_history)
     x_grads = [[0.0; 0.0; 0.0]]
-    p_grad = Matrix{Float64}(I, 3, 3)
+    p_grad = 1.0Matrix{Float64}(I, 3, 3)
     Ahats = [copy(filter.A)]
     @assert length(action_history) == length(measurement_history)
     for (u, y, p) in ProgressBar(zip(action_history, measurement_history, Σ_history))
@@ -73,19 +73,21 @@ function run_gradient(filter, action_history, measurement_history, Σ_history)
             ϵx = x_grad - (Ahat*x_grad + filter.B*u)
             ϵy = y - filter.H*x_grad
             dμ = p_grad*ϵx - filter.H'*filter.R*ϵy
-            x_grad -= (0.05*dμ)
+            x_grad -= (0.1*dμ)
             Ahat_grad = p*ϵx*x_grad'
 
-            Ahat += 0.0000005*Ahat_grad
+            Ahat += 0.0001*Ahat_grad
             # println(ϵx, ϵy, dμ, "\n")
         end
         push!(x_grads, x_grad)
         push!(Ahats, Ahat)
+        # break
     end
     return x_grads
 end
 
 grad_states = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
+
 
 pgrad = [x[1] for x in grad_states]
 vgrad = [x[2] for x in grad_states]
