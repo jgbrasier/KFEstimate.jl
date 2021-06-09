@@ -75,7 +75,6 @@ function run_gradient(filter, action_history, measurement_history, Σ_history)
             dμ = p_grad*ϵx - filter.H'*filter.R*ϵy
             x_grad -= (0.1*dμ)
             Ahat_grad = p*ϵx*x_grad'
-
             Ahat += 0.0001*Ahat_grad
             # println(ϵx, ϵy, dμ, "\n")
         end
@@ -96,4 +95,59 @@ agrad = [x[3] for x in grad_states]
 plot(time_step, [p[2:end] v[2:end] a[2:end]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
 plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
 plot!(time_step, [pgrad[2:end] vgrad[2:end] agrad[2:end]], label = ["GD p" "GD v" "GD a"], legend=:bottomright)
+xlabel!("time step (t)")
+
+##
+using Zygote
+
+Aest = randn(3, 3)
+Best = randn(3, 1)
+
+est_kf = KalmanFilter(Aest, Best, Q, H, R)
+
+function step_loss(filter::KalmanFilter, x, p, u, y)
+    ϵx = x - (filter.A*x + filter.B*u)
+    ϵy = y - filter.H*x
+    return -ϵx'*filter.R*ϵx + ϵy'*p*ϵy
+end
+
+function run_gradient(filter, action_history, measurement_history, Σ_history)
+    x_grads = [[0.0; 0.0; 0.0]]
+    p_grads = [Matrix{Float64}(I, 3, 3)]
+    # Ahats = [copy(filter.A)]
+    # Bhats = [copy(filter.B)]
+    @assert length(action_history) == length(measurement_history)
+    for (u, y) in ProgressBar(zip(action_history, measurement_history))
+        x_grad = x_grads[end]
+        p_grad = p_grads[end]
+        for i in 1:10
+            # print(x_grad, "\n")
+            dx, = gradient(x -> step_loss(filter, x, p_grad, u, y), x_grad)
+            x_grad -= (0.01*dx)
+            dp, = gradient(p -> step_loss(filter, x_grad, p, u, y), p_grad)
+            p_grad -= (0.00000001*dp)
+            dA, = gradient(() -> step_loss(filter, x_grad, p_grad, u, y), Params([filter.A]))
+            filter.A += 0.00001*dA
+            dB, = gradient(() -> step_loss(filter, x_grad, p_grad, u, y), Params([filter.B]))
+            filter.B += 0.00001*dB
+            # println(ϵx, ϵy, dμ, "\n")
+        end
+        push!(x_grads, x_grad)
+        push!(p_grads, p_grad)
+        # push!(Ahats, copy(filter.A))
+        # push!(Bhats, copy(filter.B))
+    end
+    return x_grads
+end
+
+grad_states = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
+
+
+pgrad = [x[1] for x in grad_states]
+vgrad = [x[2] for x in grad_states]
+agrad = [x[3] for x in grad_states]
+
+plot(time_step, [p[2:end] v[2:end] a[2:end]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
+plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
+plot!(time_step, [pgrad[2:end] vgrad[2:end] agrad[2:end]], label = ["learned p" "learned v" "learned a"], legend=:bottomright)
 xlabel!("time step (t)")
