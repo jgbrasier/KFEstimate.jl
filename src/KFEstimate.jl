@@ -22,7 +22,7 @@ include("filters.jl")
 
 export
     dynamic,
-    predict,
+    prediction,
     observation,
     correction,
     pre_fit
