@@ -2,12 +2,12 @@
 
 function dynamic(ekf::ExtendedKalmanFilter, x::AbstractVector, u::AbstractVector)
     # Non linear function F has to have x and u as inputs
-    return ekf.f(x, u) + cholesky(ekf.Q).L*randn(size(ekf.Q, 1))
+    return ekf.f(x) + cholesky(ekf.Q).L*randn(size(ekf.Q, 1))
 end
 
 function prediction(ekf::ExtendedKalmanFilter, s::State, u::AbstractVector)
-    xp = ekf.f(s.x, u) # predicted state prior
-    F = ForwardDiff.jacobian(μ -> ekf.f(μ, u), s.x)
+    xp = ekf.f(s.x) # predicted state prior
+    F = ForwardDiff.jacobian(μ -> ekf.f(μ), s.x)
     Pp = F*s.P*F' + ekf.Q # a priori state covariance
     return State(xp, Pp)
 end

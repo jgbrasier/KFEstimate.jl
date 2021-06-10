@@ -108,7 +108,7 @@ l = @layout [a{0.7h};grid(1, 3)]
 p1 = plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
 p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
 p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2] μgrad[2:end, 3]], label = ["learned p" "learned v" "learned a"], legend=:bottomright)
-p2 = plot(time_step, L, title="A matrix loss")
+p2 = plot(time_step[250:end], L[250:end], title="A matrix loss")
 p3 = plot(time_step, (x[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error")
 p4 = plot(time_step[250:end], (x[251:end, :]-μgrad[251:end, :]).^2, title="grad vs. sim error")
 plot(p1, p2, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))

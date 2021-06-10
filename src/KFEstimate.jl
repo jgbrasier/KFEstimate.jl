@@ -9,7 +9,7 @@ using Random
 using Revise
 using Plots
 using ProgressBars
-using Flux.Optimise
+using Flux, Flux.Optimise
 using Statistics
 using Distributions
 import Random: rand
