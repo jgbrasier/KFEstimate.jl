@@ -11,6 +11,7 @@ using Plots
 using ProgressBars
 using Flux.Optimise
 using Statistics
+using Distributions
 import Random: rand
 
 export

@@ -34,8 +34,9 @@ filtered_states = run_filter(kf, s0, action_sequence, sim_measurements)
 p = [x[1] for x in sim_states]
 v = [x[2] for x in sim_states]
 a = [x[3] for x in sim_states]
+x = hcat(p, v, a)
 # plot
-plot(time_step, [p[2:end] v[2:end] a[2:end]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomleft)
+plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomleft)
 plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtred p" "filtered v" "filtered a"], legend=:bottomleft)
 xlabel!("time step (t)")
 ## Plot noise covariance loss
@@ -58,7 +59,7 @@ R = history["R"][argmin(history["loss"])]
 ## Process matrix parameter estimation
 # for each state k, perform gradient descent on process log-likelihood using autodiff
 
-using Zygote
+using Zygote, Statistics
 
 Aest = randn(3, 3)
 Best = randn(3, 1)
@@ -77,7 +78,9 @@ function run_gradient(filter, action_history, measurement_history, Σ_history)
     # Bhats = [copy(filter.B)]
     η = 0.00002
     @assert length(action_history) == length(measurement_history)
+    L = []
     for (u, y) in ProgressBar(zip(action_history, measurement_history))
+        old_A = copy(filter.A)
         s = s_grad[end]
         for i in 1:10
             # print(x_grad, "\n")
@@ -89,20 +92,29 @@ function run_gradient(filter, action_history, measurement_history, Σ_history)
             filter.B += η*dB
             # println(ϵx, ϵy, dμ, "\n")
         end
+        new_A = copy(filter.A)
+        push!(L, norm(old_A-new_A))
         push!(s_grad, s)
         # push!(Ahats, copy(filter.A))
         # push!(Bhats, copy(filter.B))
     end
-    return s_grad
+    return s_grad, L
 end
 
-grad_states = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
+grad_states, L = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
 μgrad, Σgrad = unpack(grad_states)
 
-plot(time_step, [p[2:end] v[2:end] a[2:end]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
-plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
-plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2] μgrad[2:end, 3]], label = ["learned p" "learned v" "learned a"], legend=:bottomright)
+l = @layout [a{0.7h};grid(1, 3)]
+p1 = plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
+p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
+p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2] μgrad[2:end, 3]], label = ["learned p" "learned v" "learned a"], legend=:bottomright)
+p2 = plot(time_step, L, title="A matrix loss")
+p3 = plot(time_step, (x[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error")
+p4 = plot(time_step[250:end], (x[251:end, :]-μgrad[251:end, :]).^2, title="grad vs. sim error")
+plot(p1, p2, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))
 xlabel!("time step (t)")
+
+
 
 ##
 est_kf = KalmanFilter(Aest, Best, Q, H, R)
@@ -148,7 +160,7 @@ pgrad = [x[1] for x in grad_states]
 vgrad = [x[2] for x in grad_states]
 agrad = [x[3] for x in grad_states]
 
-plot(time_step, [p[2:end] v[2:end] a[2:end]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
+plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
 plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
 plot!(time_step, [pgrad[2:end] vgrad[2:end] agrad[2:end]], label = ["learned p" "learned v" "learned a"], legend=:bottomright)
 xlabel!("time step (t)")

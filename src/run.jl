@@ -24,6 +24,7 @@ function run_filter(filter::AbstractFilter, s0::State, action_history::AbstractA
     @assert length(action_history) == length(measurement_history)
     states = [s0]
     for (u, y) in zip(action_history, measurement_history)
+        # filter.A += rand(Normal(0, 0.005), (3, 3))
         sp = prediction(filter, states[end], u)
         sn = correction(filter, sp, y)
         push!(states, sn)
