@@ -1,47 +1,111 @@
 using Revise, KFEstimate
 using LinearAlgebra, Plots
+using Flux.Optimise
+using ProgressBars
 pathof(KFEstimate)
-
 ## Normal Kalman Filter
 
-# dynamic model x = [p, v]
-dt = 0.01
-A = [1.0 dt; 0.0 1.0]
-B = zeros(2, 2)
-W = 0.01*Matrix{Float64}(I, 2, 2)
-dyn = LinearDynamicModel(A, B, W)
+# dynamic model x = [p, v, a]
+dt = 0.001
+A = [1.0 dt 1/2*dt^2; 0.0 1.0 dt; 0.0 0.0 1.0]
+B = [0.0; 0.0; 1.0]
+B = reshape(B, length(B), 1)
+Q = 0.01*Matrix{Float64}(I, 3, 3)
 
 # observation model, assume we can noisily measure position
-H = [1.0 0]
-R_gt = 100.0*Matrix{Float64}(I, 1, 1)
-obs = LinearObservationModel(H)
+H = randn(3, 3)
+# H = [1 0 0; 0 1 0; 0 0 1]
+R = 1.0*Matrix{Float64}(I, 3, 3)
 
-kf = KalmanFilter(dyn, obs)
+kf = KalmanFilter(A, B, Q, H, R)
 
 # run simulation
-time_step = 0.0:dt:1000
-x0 = [0.0, 1.0]
-action_sequence = [[0.0; 0.0] for t in time_step]
-sim_states, sim_measurements = run_simulation(kf, R_gt, x0, action_sequence)
-
+time_step = 0:1000
+x0 = [0.0; 0.0; 0.0]
+action_sequence = [[exp(-0.01*(t-1))] for t in time_step]
+sim_states, sim_measurements = run_simulation(kf, x0, action_sequence)
 # run kalman filter
-P0 = Matrix{Float64}(I, 2, 2)
+P0 = Matrix{Float64}(I, 3, 3)
 s0 = State(x0, P0) # initial state belief
-filtered_states = run_filter(kf, R_gt, s0, action_sequence, sim_measurements)
+filtered_states = run_filter(kf, s0, action_sequence, sim_measurements)
 
 # unpack sim and filtered states
 μ, Σ = unpack(filtered_states)
 p = [x[1] for x in sim_states]
 v = [x[2] for x in sim_states]
+a = [x[3] for x in sim_states]
+x = hcat(p, v, a)
 # plot
-plot(time_step, p[2:end], label = "simulated p", legend=:bottomleft)
-plot!(time_step, v[2:end], label = "simulated v", legend=:bottomleft)
-plot!(time_step, μ[2:end, 1], label = "measured p", legend=:bottomleft)
-plot!(time_step, μ[2:end, 2], label = "estimated v", legend=:bottomleft)
+plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomleft)
+plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtred p" "filtered v" "filtered a"], legend=:bottomleft)
 xlabel!("time step (t)")
-## Noise covariance estimation
+## Plot noise covariance loss
 
-R_range = 90:0.1:100
-loss = compute_loss(kf, R_range, s0, action_sequence, sim_measurements)
-
+R_range = 5:0.1:15
+loss = compute_noise_loss(kf, R_range, s0, action_sequence, sim_measurements)
 plot(R_range, loss)
+
+## Noise covariance estimation
+# after all states k=1:T, perform gradient descent on noise log-likelihood
+opt = Optimise.ADAM(0.5)
+n_epochs = 20
+R_est = 7.0*Matrix{Float64}(I, 1, 1) # estimation of noise
+estimated_kf = KalmanFilter(A, B, Q, H, R_est)
+history = run_noise_estimation(estimated_kf, opt, n_epochs, s0, action_sequence, sim_measurements)
+plot(1:n_epochs, history["loss"], label="loss")
+
+R = history["R"][argmin(history["loss"])]
+
+## Process matrix parameter estimation
+# for each state k, perform gradient descent on process log-likelihood using autodiff
+
+using Zygote, Statistics
+
+Aest = randn(3, 3)
+Best = randn(3, 1)
+
+est_kf = KalmanFilter(Aest, Best, Q, H, R)
+opt = ADAM(0.000025)
+
+function run_gradient(filter::KalmanFilter, action_history, measurement_history)
+    s_grad = [State([0.0; 0.0; 0.0], Matrix{Float64}(I, 3, 3))]
+    # Ahats = [copy(filter.A)]
+    # Bhats = [copy(filter.B)]
+    # η = 0.00002
+    @assert length(action_history) == length(measurement_history)
+    L = []
+    for (u, y) in ProgressBar(zip(action_history, measurement_history))
+        old_A = copy(filter.A)
+        s = s_grad[end]
+        for i in 1:300
+            # print(x_grad, "\n")
+            sp = prediction(filter, s, u)
+            s = correction(filter, sp, y)
+            dA, = gradient(() -> mse_loss(filter, s, u, y), Params([filter.A]))
+            # filter.A += η*dA
+            update!(opt, filter.A, dA)
+            dB, = gradient(() -> mse_loss(filter, s, u, y), Params([filter.B]))
+            update!(opt, filter.B, dB)
+            # println(ϵx, ϵy, dμ, "\n")
+        end
+        new_A = copy(filter.A)
+        push!(L, norm(old_A-new_A))
+        push!(s_grad, s)
+        # push!(Ahats, copy(filter.A))
+        # push!(Bhats, copy(filter.B))
+    end
+    return s_grad, L
+end
+
+grad_states, L = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
+μgrad, Σgrad = unpack(grad_states)
+
+l = @layout [a{0.7h};grid(1, 3)]
+p1 = plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
+p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
+p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2] μgrad[2:end, 3]], label = ["learned p" "learned v" "learned a"], legend=:bottomright)
+p2 = plot(time_step[250:end], L[250:end], title="A matrix loss")
+p3 = plot(time_step, (x[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error")
+p4 = plot(time_step[250:end], (x[251:end, :]-μgrad[251:end, :]).^2, title="grad vs. sim error")
+plot(p1, p2, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))
+xlabel!("time step (t)")

@@ -8,49 +8,40 @@ using Zygote
 using Random
 using Revise
 using Plots
+using ProgressBars
+using Flux, Flux.Optimise
+using Statistics
+using Distributions
 import Random: rand
-
-export
-    State,
-    DynamicModel,
-    LinearDynamicModel,
-    NonLinearDynamicModel,
-    ObservationModel,
-    LinearObservationModel,
-    NonLinearObservationModel
-include("models.jl")
-
-export
-    dynamic,
-    predict,
-    observation,
-    correction,
-    pre_fit
-include("kf_functions.jl")
-
-export
-    dynamic,
-    predict,
-    observation,
-    correction,
-    pre_fit
-include("ekf_functions.jl")
 
 export
     AbstractFilter,
     KalmanFilter,
-    ExtendedKalmanFilter
+    ExtendedKalmanFilter,
+    State
 include("filters.jl")
+
+export
+    dynamic,
+    prediction,
+    observation,
+    correction,
+    pre_fit,
+    likelihood,
+    mse_loss
+include("ekf_functions.jl")
+include("kf_functions.jl")
 
 export
     run_simulation,
     run_filter,
-    unpack
+    run_noise_estimation
 include("run.jl")
 
 export
     unpack,
+    unpack_history,
     likelihood,
-    compute_loss
+    compute_noise_loss
 include("utils.jl")
 end
