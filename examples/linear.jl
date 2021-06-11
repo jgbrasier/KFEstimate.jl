@@ -13,8 +13,8 @@ B = reshape(B, length(B), 1)
 Q = 0.01*Matrix{Float64}(I, 3, 3)
 
 # observation model, assume we can noisily measure position
-# H = randn(3, 3)
-H = [1 0 0; 0 1 0; 0 0 1]
+H = randn(3, 3)
+# H = [1 0 0; 0 1 0; 0 0 1]
 R = 1.0*Matrix{Float64}(I, 3, 3)
 
 kf = KalmanFilter(A, B, Q, H, R)
@@ -65,31 +65,27 @@ Aest = randn(3, 3)
 Best = randn(3, 1)
 
 est_kf = KalmanFilter(Aest, Best, Q, H, R)
+opt = ADAM(0.000025)
 
-function step_loss(filter::KalmanFilter, x, p, u, y)
-    ϵx = x - (filter.A*x + filter.B*u)
-    ϵy = y - filter.H*x
-    return -ϵx'*filter.R*ϵx + ϵy'*p*ϵy
-end
-
-function run_gradient(filter, action_history, measurement_history, Σ_history)
+function run_gradient(filter::KalmanFilter, action_history, measurement_history)
     s_grad = [State([0.0; 0.0; 0.0], Matrix{Float64}(I, 3, 3))]
     # Ahats = [copy(filter.A)]
     # Bhats = [copy(filter.B)]
-    η = 0.00002
+    # η = 0.00002
     @assert length(action_history) == length(measurement_history)
     L = []
     for (u, y) in ProgressBar(zip(action_history, measurement_history))
         old_A = copy(filter.A)
         s = s_grad[end]
-        for i in 1:10
+        for i in 1:300
             # print(x_grad, "\n")
             sp = prediction(filter, s, u)
             s = correction(filter, sp, y)
-            dA, = gradient(() -> step_loss(filter, s.x, s.P, u, y), Params([filter.A]))
-            filter.A += η*dA
-            dB, = gradient(() -> step_loss(filter, s.x, s.P, u, y), Params([filter.B]))
-            filter.B += η*dB
+            dA, = gradient(() -> mse_loss(filter, s, u, y), Params([filter.A]))
+            # filter.A += η*dA
+            update!(opt, filter.A, dA)
+            dB, = gradient(() -> mse_loss(filter, s, u, y), Params([filter.B]))
+            update!(opt, filter.B, dB)
             # println(ϵx, ϵy, dμ, "\n")
         end
         new_A = copy(filter.A)
@@ -112,55 +108,4 @@ p2 = plot(time_step[250:end], L[250:end], title="A matrix loss")
 p3 = plot(time_step, (x[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error")
 p4 = plot(time_step[250:end], (x[251:end, :]-μgrad[251:end, :]).^2, title="grad vs. sim error")
 plot(p1, p2, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))
-xlabel!("time step (t)")
-
-
-
-##
-est_kf = KalmanFilter(Aest, Best, Q, H, R)
-
-function step_loss(filter::KalmanFilter, x, p, u, y)
-    ϵx = x - (filter.A*x + filter.B*u)
-    ϵy = y - filter.H*x
-    return -ϵx'*filter.R*ϵx + ϵy'*p*ϵy
-end
-
-function run_gradient(filter, action_history, measurement_history, Σ_history)
-    x_grads = [[0.0; 0.0; 0.0]]
-    p_grads = [Matrix{Float64}(I, 3, 3)]
-    # Ahats = [copy(filter.A)]
-    # Bhats = [copy(filter.B)]
-    @assert length(action_history) == length(measurement_history)
-    for (u, y) in ProgressBar(zip(action_history, measurement_history))
-        x_grad = x_grads[end]
-        p_grad = p_grads[end]
-        for i in 1:10
-            # print(x_grad, "\n")
-            dx, = gradient(x -> step_loss(filter, x, p_grad, u, y), x_grad)
-            x_grad -= (0.01*dx)
-            dp, = gradient(p -> step_loss(filter, x_grad, p, u, y), p_grad)
-            p_grad -= (0.00000001*dp)
-            dA, = gradient(() -> step_loss(filter, x_grad, p_grad, u, y), Params([filter.A]))
-            filter.A += 0.000005*dA
-            dB, = gradient(() -> step_loss(filter, x_grad, p_grad, u, y), Params([filter.B]))
-            filter.B += 0.000005*dB
-            # println(ϵx, ϵy, dμ, "\n")
-        end
-        push!(x_grads, x_grad)
-        push!(p_grads, p_grad)
-        # push!(Ahats, copy(filter.A))
-        # push!(Bhats, copy(filter.B))
-    end
-    return x_grads
-end
-
-grad_states = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
-
-pgrad = [x[1] for x in grad_states]
-vgrad = [x[2] for x in grad_states]
-agrad = [x[3] for x in grad_states]
-
-plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright)
-plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright)
-plot!(time_step, [pgrad[2:end] vgrad[2:end] agrad[2:end]], label = ["learned p" "learned v" "learned a"], legend=:bottomright)
 xlabel!("time step (t)")

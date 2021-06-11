@@ -34,3 +34,17 @@ function pre_fit(ekf::ExtendedKalmanFilter, s::State, y::AbstractVector)
     S = H*s.P*H' + ekf.R # pre fit residual covariance
     return v'*inv(S)*v + log(det(2*π*S)) # log likelihood for a state k
 end
+
+"""Loss """
+
+function likelihood(filter::ExtendedKalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
+    ϵx = s.x - filter.f(s.x)
+    ϵy = y - filter.h(s.x)
+    return ϵx'*filter.R*ϵx - ϵy'*s.P*ϵy
+end
+
+function mse_loss(filter::ExtendedKalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
+    ϵx = norm(s.x - filter.f(s.x))
+    ϵy = norm(y - filter.h(s.x))
+    return ϵx + ϵy
+end

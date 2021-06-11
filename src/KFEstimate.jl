@@ -26,7 +26,9 @@ export
     prediction,
     observation,
     correction,
-    pre_fit
+    pre_fit,
+    likelihood,
+    mse_loss
 include("ekf_functions.jl")
 include("kf_functions.jl")
 
