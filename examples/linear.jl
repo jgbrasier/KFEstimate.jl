@@ -97,7 +97,7 @@ function run_gradient(filter::KalmanFilter, action_history, measurement_history)
     return s_grad, L
 end
 
-grad_states, L = run_gradient(est_kf, action_sequence, sim_measurements, Σ)
+grad_states, L = run_gradient(est_kf, action_sequence, sim_measurements)
 μgrad, Σgrad = unpack(grad_states)
 
 l = @layout [a{0.7h};grid(1, 3)]
