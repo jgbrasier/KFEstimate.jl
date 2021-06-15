@@ -77,7 +77,7 @@ function run_gradient(filter, action_history, measurement_history)
     @assert length(action_history) == length(measurement_history)
     for (u, y) in ProgressBar(zip(action_history, measurement_history))
         s = s_grad[end]
-        for i in 1:400
+        for i in 1:200
             sp = prediction(filter, s, u)
             s = correction(filter, sp, y)
             ps = Flux.params(filter.f)
@@ -97,7 +97,7 @@ function run_gradient(filter, action_history, measurement_history)
     return s_grad
 end
 
-grad_states = run_gradient(est_ekf, action_sequence, sim_measurements, Σ)
+grad_states = run_gradient(est_ekf, action_sequence, sim_measurements)
 μgrad, Σgrad = unpack(grad_states)
 
 l = @layout [a{0.7h};grid(1, 2)]
