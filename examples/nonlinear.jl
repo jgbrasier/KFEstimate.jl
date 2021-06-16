@@ -71,13 +71,14 @@ opt = ADAM(0.00001)
 
 
 function run_gradient(filter, action_history, measurement_history)
-    s_grad = [State([0.0; 0.0], Matrix{Float64}(I, 2, 2))]
+    s_grad = []
     # Ahats = [copy(filter.A)]
     # Bhats = [copy(filter.B)]
     @assert length(action_history) == length(measurement_history)
-    for (u, y) in ProgressBar(zip(action_history, measurement_history))
-        s = s_grad[end]
-        for i in 1:300
+    for i in  ProgressBar(1:10)
+        s_grad = [State([0.0; 0.0], Matrix{Float64}(I, 2, 2))]
+        for (u, y) in zip(action_history, measurement_history)
+            s = s_grad[end]
             sp = prediction(filter, s, u)
             s = correction(filter, sp, y)
             ps = Flux.params(filter.f)
@@ -88,9 +89,9 @@ function run_gradient(filter, action_history, measurement_history)
             # println(grads[ps[1]])
             # println(filter.f[1].weight, "\n")
             # println(ϵx, ϵy, dμ, "\n")
+            push!(s_grad, s)
         end
         # break
-        push!(s_grad, s)
         # push!(Ahats, copy(filter.A))
         # push!(Bhats, copy(filter.B))
     end
