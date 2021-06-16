@@ -65,7 +65,7 @@ Aest = randn(3, 3)
 Best = randn(3, 1)
 
 est_kf = KalmanFilter(Aest, Best, Q, H, R)
-opt = ADAM(0.000025)
+opt = ADAM(0.0001)
 
 function run_gradient(filter::KalmanFilter, action_history, measurement_history)
     s_grad = [State([0.0; 0.0; 0.0], Matrix{Float64}(I, 3, 3))]
@@ -77,7 +77,7 @@ function run_gradient(filter::KalmanFilter, action_history, measurement_history)
     for (u, y) in ProgressBar(zip(action_history, measurement_history))
         old_A = copy(filter.A)
         s = s_grad[end]
-        for i in 1:300
+        for i in 1:100
             # print(x_grad, "\n")
             sp = prediction(filter, s, u)
             s = correction(filter, sp, y)

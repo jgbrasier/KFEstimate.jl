@@ -7,7 +7,7 @@ pathof(KFEstimate)
 
 ## pendulum simulation
 
-dt = 0.001
+global dt = 0.001
 g = 9.81
 
 function f(x)
@@ -77,12 +77,12 @@ function run_gradient(filter, action_history, measurement_history)
     @assert length(action_history) == length(measurement_history)
     for (u, y) in ProgressBar(zip(action_history, measurement_history))
         s = s_grad[end]
-        for i in 1:200
+        for i in 1:300
             sp = prediction(filter, s, u)
             s = correction(filter, sp, y)
             ps = Flux.params(filter.f)
             grads = gradient(ps) do
-                mse_loss(filter, s, u, y)
+                likelihood(filter, s, u, y)
             end
             update!(opt, ps, grads)
             # println(grads[ps[1]])
