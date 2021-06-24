@@ -37,12 +37,6 @@ end
 
 """Loss """
 
-# function likelihood(filter::ExtendedKalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
-#     ϵx = s.x - filter.f(s.x)
-#     ϵy = y - filter.h(s.x)
-#     return ϵx'*filter.R*ϵx + ϵy'*s.P*ϵy
-# end
-
 function state_mse(filter::ExtendedKalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
     ϵx = norm(s.x - filter.f(s.x))
     ϵy = norm(y - filter.h(s.x))
