@@ -26,14 +26,18 @@ function correction(kf::KalmanFilter, s::State, y::AbstractVector)
 end
 
 function pre_fit(kf::KalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
-    x_hat = kf.A*s.x + kf.B*u # predicted state prior
-    P_hat = kf.A*s.P*kf.A' + kf.Q # a priori state covariance
-    v = y - kf.H*x_hat # measurement pre fit residual
-    S = kf.H*P_hat*kf.H' + kf.R # pre fit residual covariance
+    v = y - kf.H*s.x # measurement pre fit residual
+    S = kf.H*s.P*kf.H' + kf.R # pre fit residual covariance
     return v'*inv(S)*v + log(det(2*π*S)) # log likelihood for a state k
 end
 
-function mse_loss(filter::KalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
+# function likelihood(filter::KalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
+#     ϵx = s.x - (filter.A*s.x + filter.B*u)
+#     ϵy = y - filter.H*s.x
+#     return ϵx'*filter.R*ϵx + ϵy'*s.P*ϵy
+# end
+
+function state_mse(filter::KalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
     ϵx = norm(s.x - (filter.A*s.x + filter.B*u))
     ϵy = norm(y - filter.H*s.x)
     return ϵx + ϵy

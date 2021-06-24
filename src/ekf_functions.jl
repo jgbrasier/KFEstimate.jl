@@ -29,17 +29,21 @@ function correction(ekf::ExtendedKalmanFilter, s::State, y::AbstractVector)
 end
 
 function pre_fit(ekf::ExtendedKalmanFilter, s::State, y::AbstractVector)
-    x_hat = ekf.f(s.x) # predicted state prior
-    F = ForwardDiff.jacobian(μ -> ekf.f(μ), s.x)
-    P_hat = F*s.P*F' + ekf.Q # a priori state covariance
-    v = y - ekf.h(xp) # measurement pre fit residual
-    H = ForwardDiff.jacobian(μ -> ekf.h(μ), x_hat)
-    S = H*P_hat*H' + ekf.R # pre fit residual covariance
-    return v'*inv(S)*v + log(det(S)) # log likelihood for a state k
+    v = y - ekf.h(s.x) # measurement pre fit residual
+    H = ForwardDiff.jacobian(μ -> ekf.h(μ), s.x)
+    S = H*s.P*H' + ekf.R # pre fit residual covariance
+    return v'*inv(S)*v + log(det(2*π*S)) # log likelihood for a state k
 end
 
 """Loss """
-function mse_loss(filter::ExtendedKalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
+
+# function likelihood(filter::ExtendedKalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
+#     ϵx = s.x - filter.f(s.x)
+#     ϵy = y - filter.h(s.x)
+#     return ϵx'*filter.R*ϵx + ϵy'*s.P*ϵy
+# end
+
+function state_mse(filter::ExtendedKalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
     ϵx = norm(s.x - filter.f(s.x))
     ϵy = norm(y - filter.h(s.x))
     return ϵx + ϵy

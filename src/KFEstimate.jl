@@ -27,7 +27,7 @@ export
     observation,
     correction,
     pre_fit,
-    mse_loss
+    state_mse
 include("ekf_functions.jl")
 include("kf_functions.jl")
 
@@ -37,6 +37,6 @@ export
 include("run.jl")
 
 export
-    unpack
+    unpack,
 include("utils.jl")
 end
