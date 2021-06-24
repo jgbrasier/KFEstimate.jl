@@ -48,3 +48,23 @@ function run_param_filter(θ, param_filter::AbstractParamFilter, s0::State, acti
     end
     return states
 end
+
+function run_gradient(θ, param_kf::ParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
+    opt, epochs)
+    """
+    Run gradient descent on unknown parameters of a linear on non linear state space model (parametrized abstract filter).
+    returns the found paramters after n epochs, and the associated loss function
+    """
+    @assert length(action_sequence)==length(sim_measurements)
+    # Compute initial state esimates
+    loss = []
+    ps = Flux.params(θ)
+    for i in ProgressBar(1:epochs)
+        states = run_param_filter(θ, param_kf, s0, action_history, measurement_history)
+        gs = gradient(()-> kf_likelihood(θ, param_kf, states, action_sequence, sim_measurements), ps)
+        update!(opt, ps, gs)
+        l = kf_likelihood(θ, param_kf, states0, action_sequence, sim_measurements)
+        push!(loss, l)
+    end
+    return θ, loss
+end
