@@ -43,7 +43,8 @@ include("likelihood.jl")
 
 export
     run_simulation,
-    run_filter
+    run_filter,
+    run_param_filter
 include("run.jl")
 
 export

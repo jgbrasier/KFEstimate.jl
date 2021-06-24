@@ -31,3 +31,20 @@ function run_filter(filter::AbstractFilter, s0::State, action_history::AbstractA
     end
     return states
 end
+
+function run_param_filter(θ, param_filter::AbstractParamFilter, s0::State, action_history::AbstractArray,
+    measurement_history::AbstractArray)
+    """
+    Run parametrized Filter on a measurement_history points, for a given action_history
+    Start from an initial state belief s0
+    """
+    @assert length(action_history) == length(measurement_history)
+    states = [s0]
+    for (u, y) in zip(action_history, measurement_history)
+        # filter.A += rand(Normal(0, 0.005), (3, 3))
+        sp = param_prediction(θ, param_filter, states[end], u)
+        sn = param_correction(θ, param_filter, sp, y)
+        push!(states, sn)
+    end
+    return states
+end
