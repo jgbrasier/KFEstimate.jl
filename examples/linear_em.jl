@@ -41,4 +41,39 @@ xlabel!("time step (t)")
 
 ##
 
-Ahat()
+Ahat(θ) = [θ dt 1/2*dt^2; 0.0 θ dt; 0.0 0.0 θ]
+
+θ0 = 2.0
+Ahat0 = Ahat(θ0)
+kf0 = KalmanFilter(Ahat0, B, Q, H, R)
+states0 = run_filter(kf, s0, action_sequence, sim_measurements)
+
+
+function kf_likelihood(θ, A, B, Q, H, R, state_beliefs::AbstractArray,
+    action_history::AbstractArray, measurement_history::AbstractArray)
+    # drop initial s0 belief
+    state_beliefs = state_beliefs[2:end]
+    @assert length(state_beliefs) == length(measurement_history)
+    N = length(measurement_history)
+    # initialize log likelihood
+    # l = o.R[1]
+    l=0.0
+    for (k, (s, y, u)) in enumerate(zip(state_beliefs, measurement_history, action_history))
+        x_hat = A(θ)*s.x + B*u # predicted state prior
+        P_hat = A(θ)*s.P*A(θ)' + Q # a priori state covariance
+        v = y - H*x_hat # measurement pre fit residual
+        S = H*P_hat*H' + R # pre fit residual covariance
+        l += 1/2*(v'*inv(S)*v + log(det(S)))
+    end
+    return l
+end
+
+loss = []
+θ_range = 0.5:0.1:1.5
+for θ_i in θ_range
+    gs = gradient(𝛉 -> kf_likelihood(𝛉, Ahat, B, Q, H, R, states0, action_sequence, sim_measurements), θ_i)
+    l = kf_likelihood(θ_i, Ahat, B, Q, H, R, states0, action_sequence, sim_measurements)
+    push!(loss, l)
+end
+
+plot(θ_range, loss)

@@ -27,21 +27,16 @@ export
     observation,
     correction,
     pre_fit,
-    likelihood,
     mse_loss
 include("ekf_functions.jl")
 include("kf_functions.jl")
 
 export
     run_simulation,
-    run_filter,
-    run_noise_estimation
+    run_filter
 include("run.jl")
 
 export
-    unpack,
-    unpack_history,
-    likelihood,
-    compute_noise_loss
+    unpack
 include("utils.jl")
 end
