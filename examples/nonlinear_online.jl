@@ -45,23 +45,6 @@ plot!(time_step, μ[2:end, 1], label = "measured θ", legend=:bottomleft)
 plot!(time_step, μ[2:end, 2], label = "estimated dθ", legend=:bottomleft)
 xlabel!("time step (t)")
 
-## Noise covariance loss
-
-R_range = 5:0.1:15
-loss = compute_noise_loss(ekf, R_range, s0, action_sequence, sim_measurements)
-
-plot(R_range, loss)
-
-## Noise covariance estimation
-
-opt = Optimise.ADAM(0.5)
-n_epochs = 20
-R0 = 8.0*Matrix{Float64}(I, 1, 1)
-history = run_noise_estimation(ekf, opt, n_epochs, s0, action_sequence, sim_measurements)
-p1 = plot(1:n_epochs, history[:, 1], label="loss")
-p2 = plot(1:n_epochs, history[:, 2], label="R")
-plot(p1, p2)
-##
 using Zygote, Statistics
 
 hidden_dim = 24
