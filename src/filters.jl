@@ -33,6 +33,18 @@ function ExtendedKalmanFilter(f, Q::AbstractMatrix, h::Function, R::AbstractMatr
     return ExtendedKalmanFilter(f, Symmetric(Q), h, Symmetric(R))
 end
 
+""" Parametrized Kalman and Extended Kalman Filters """
+
+abstract type AbstractParamFilter end
+
+mutable struct ParamKalmanFilter{a, b, q, h, r} <: AbstractParamFilter
+    # parametrized kalman filter where each matrix is a function of θ
+    A::a # process matrix A(θ)
+    B::b # control matrix B(θ)
+    Q::q # process zero mean noise covariance Q(θ)
+    H::h # measurement matrix H(θ)
+    R::r # measurement zero mean noise covariance R(θ)
+end
 
 """ State: mean and cov """
 struct State{a<:Number, b<:Number}

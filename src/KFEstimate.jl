@@ -18,6 +18,8 @@ export
     AbstractFilter,
     KalmanFilter,
     ExtendedKalmanFilter,
+    AbstractParamFilter,
+    ParamKalmanFilter,
     State
 include("filters.jl")
 
