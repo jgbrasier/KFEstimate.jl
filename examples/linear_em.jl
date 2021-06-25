@@ -4,7 +4,6 @@ using Flux, Flux.Optimise
 using ProgressBars
 pathof(KFEstimate)
 
-##
 dt = 0.001
 A = [1.0 dt 1/2*dt^2; 0.0 1.0 dt; 0.0 0.0 1.0]
 B = [0.0; 0.0; 1.0]

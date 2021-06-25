@@ -1,8 +1,7 @@
-using Revise, KFEstimate
-using LinearAlgebra, Plots
+using KFEstimate
+using LinearAlgebra, Plots, Revise, ProgressBars
 using Flux, Flux.Optimise
 using Flux: Params, gradient
-using ProgressBars
 pathof(KFEstimate)
 
 ## pendulum simulation
@@ -10,8 +9,8 @@ pathof(KFEstimate)
 global dt = 0.001
 g = 9.81
 
-function f(x)
-    dx = x
+function f(x, u)
+    dx = x + dt*u
     dx[1] = x[1] + x[2]*dt
     dx[2] = x[2] - g*dt*sin(x[1])
     return dx
@@ -46,3 +45,6 @@ plot!(time_step, μ[2:end, 2], label = "filterd dθ", legend=:bottomleft)
 xlabel!("time step (t)")
 
 ##
+
+hidden_dim = 16
+fθ = Chain(Dense(length(x0), hidden_dim, sigmoid), Dense(hidden_dim, length(x0)))

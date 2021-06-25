@@ -49,11 +49,6 @@ function param_correction(θ, param_kf::ParamKalmanFilter, s::State, y::Abstract
     return State(x_post, P_post)
 end
 
-function pre_fit(kf::KalmanFilter, s::State, u::AbstractVector, y::AbstractVector)
-    v = y - kf.H*s.x # measurement pre fit residual
-    S = kf.H*s.P*kf.H' + kf.R # pre fit residual covariance
-    return v'*inv(S)*v + log(det(2*π*S)) # log likelihood for a state k
-end
 
 """ k-state MSE """
 

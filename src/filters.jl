@@ -22,7 +22,7 @@ end
 
 """ Extended Kalman Filter Structure """
 
-mutable struct ExtendedKalmanFilter{a, q<:Symmetric, b<:Function, r<:Symmetric} <: AbstractFilter
+mutable struct ExtendedKalmanFilter{a<:Function, q<:Symmetric, b<:Function, r<:Symmetric} <: AbstractFilter
     f::a # non linear process function f(x, u)
     Q::q # process zero mean noise covariance
     h::b # non linear observation function h(x)
@@ -46,6 +46,26 @@ mutable struct ParamKalmanFilter{a, b, q, h, r} <: AbstractParamFilter
     R::r # measurement zero mean noise covariance R(θ)
 end
 
+function ParamKalmanFilter(A, B, Q::AbstractMatrix,
+    H, R::AbstractMatrix)
+    return KalmanFilter(A, B, Symmetric(Q), H, Symmetric(R))
+end
+
+function ParamKalmanFilter(A, Q::AbstractMatrix,
+    H, R::AbstractMatrix)
+    return KalmanFilter(A, zeros(size(A)), Symmetric(Q), H, Symmetric(R))
+end
+
+mutable struct ExtendedParamKalmanFilter{a, q<:Symmetric, b, r<:Symmetric} <: AbstractFilter
+    f::a # non linear process function f(x, u)
+    Q::q # process zero mean noise covariance
+    h::b # non linear observation function h(x)
+    R::r# measurement zero mean noise covariance
+end
+
+function ExtendedParamKalmanFilter(f, Q::AbstractMatrix, h, R::AbstractMatrix)
+    return ExtendedKalmanFilter(f, Symmetric(Q), h, Symmetric(R))
+end
 
 
 """ State: mean and cov """
