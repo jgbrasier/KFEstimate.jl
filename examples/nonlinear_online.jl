@@ -44,52 +44,52 @@ plot!(time_step, θ[2:end, 2], label = "simulated dθ", legend=:bottomleft)
 plot!(time_step, μ[2:end, 1], label = "measured θ", legend=:bottomleft)
 plot!(time_step, μ[2:end, 2], label = "estimated dθ", legend=:bottomleft)
 xlabel!("time step (t)")
-
-using Zygote, Statistics
-
-hidden_dim = 24
-fθ = Chain(Dense(length(x0), hidden_dim, sigmoid), Dense(hidden_dim, length(x0)))
-est_ekf = ExtendedKalmanFilter(fθ, Q, h, R); # Estimated Kalman FIlet
-opt = ADAM(0.00001)
-
-
-function run_gradient(filter, action_history, measurement_history)
-    s_grad = []
-    # Ahats = [copy(filter.A)]
-    # Bhats = [copy(filter.B)]
-    @assert length(action_history) == length(measurement_history)
-    for i in  ProgressBar(1:10)
-        s_grad = [State([0.0; 0.0], Matrix{Float64}(I, 2, 2))]
-        for (u, y) in zip(action_history, measurement_history)
-            s = s_grad[end]
-            sp = prediction(filter, s, u)
-            s = correction(filter, sp, y)
-            ps = Flux.params(filter.f)
-            grads = gradient(ps) do
-                likelihood(filter, s, u, y)
-            end
-            update!(opt, ps, grads)
-            # println(grads[ps[1]])
-            # println(filter.f[1].weight, "\n")
-            # println(ϵx, ϵy, dμ, "\n")
-            push!(s_grad, s)
-        end
-        # break
-        # push!(Ahats, copy(filter.A))
-        # push!(Bhats, copy(filter.B))
-    end
-    return s_grad
-end
-
-grad_states = run_gradient(est_ekf, action_sequence, sim_measurements)
-μgrad, Σgrad = unpack(grad_states)
-
-l = @layout [a{0.7h};grid(1, 2)]
-p1 = plot(time_step, [θ[2:end, 1] θ[2:end, 2]], label = ["simulated θ" "simulated dθ"], legend=:bottomright, title="state trajectories")
-p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2]], label = ["filtered θ" "filtered dθ"], legend=:bottomright, title="state trajectories")
-p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2]], label = ["learned θ" "learned dθ"], legend=:bottomright, title="state trajectories")
-# p2 = plot(time_step[250:end], L[250:end], title="A matrix loss")
-p3 = plot(time_step, (θ[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error")
-p4 = plot(time_step[250:end], (θ[251:end, :]-μgrad[251:end, :]).^2, title="grad vs. sim error")
-plot(p1, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))
-xlabel!("time step (t)")
+##
+# using Zygote, Statistics
+#
+# hidden_dim = 24
+# fθ = Chain(Dense(length(x0), hidden_dim, sigmoid), Dense(hidden_dim, length(x0)))
+# est_ekf = ExtendedKalmanFilter(fθ, Q, h, R); # Estimated Kalman FIlet
+# opt = ADAM(0.00001)
+#
+#
+# function run_gradient(filter, action_history, measurement_history)
+#     s_grad = []
+#     # Ahats = [copy(filter.A)]
+#     # Bhats = [copy(filter.B)]
+#     @assert length(action_history) == length(measurement_history)
+#     for i in  ProgressBar(1:10)
+#         s_grad = [State([0.0; 0.0], Matrix{Float64}(I, 2, 2))]
+#         for (u, y) in zip(action_history, measurement_history)
+#             s = s_grad[end]
+#             sp = prediction(filter, s, u)
+#             s = correction(filter, sp, y)
+#             ps = Flux.params(filter.f)
+#             grads = gradient(ps) do
+#                 likelihood(filter, s, u, y)
+#             end
+#             update!(opt, ps, grads)
+#             # println(grads[ps[1]])
+#             # println(filter.f[1].weight, "\n")
+#             # println(ϵx, ϵy, dμ, "\n")
+#             push!(s_grad, s)
+#         end
+#         # break
+#         # push!(Ahats, copy(filter.A))
+#         # push!(Bhats, copy(filter.B))
+#     end
+#     return s_grad
+# end
+#
+# grad_states = run_gradient(est_ekf, action_sequence, sim_measurements)
+# μgrad, Σgrad = unpack(grad_states)
+#
+# l = @layout [a{0.7h};grid(1, 2)]
+# p1 = plot(time_step, [θ[2:end, 1] θ[2:end, 2]], label = ["simulated θ" "simulated dθ"], legend=:bottomright, title="state trajectories")
+# p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2]], label = ["filtered θ" "filtered dθ"], legend=:bottomright, title="state trajectories")
+# p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2]], label = ["learned θ" "learned dθ"], legend=:bottomright, title="state trajectories")
+# # p2 = plot(time_step[250:end], L[250:end], title="A matrix loss")
+# p3 = plot(time_step, (θ[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error")
+# p4 = plot(time_step[250:end], (θ[251:end, :]-μgrad[251:end, :]).^2, title="grad vs. sim error")
+# plot(p1, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))
+# xlabel!("time step (t)")

@@ -57,7 +57,7 @@ loss = []
 θ_range = 0.9:0.001:1.1
 for i in θ_range
     θ_i = [i]
-    states = run_param_filter(θ_i, pkf, s0, action_sequence, sim_measurements)
+    states = run_param_kf(θ_i, pkf, s0, action_sequence, sim_measurements)
     l = kf_likelihood(θ_i, param_kf, states, action_sequence, sim_measurements)
     push!(loss, l)
 end
@@ -80,7 +80,7 @@ opt = ADAM(0.001)
 epochs = 500
 newθ, loss = run_kf_gradient(θ0, pkf, s0, action_sequence, sim_measurements, opt, epochs)
 
-grad_states = run_param_filter(newθ, pkf, s0, action_sequence, sim_measurements)
+grad_states = run_param_kf(newθ, pkf, s0, action_sequence, sim_measurements)
 μgrad, Σgrad = unpack(grad_states)
 
 l = @layout [a{0.7h};grid(1, 3)]

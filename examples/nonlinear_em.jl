@@ -3,9 +3,6 @@ using LinearAlgebra, Plots, Revise, ProgressBars
 using Flux, Flux.Optimise
 using Flux: Params, gradient
 pathof(KFEstimate)
-
-## pendulum simulation
-
 global dt = 0.001
 g = 9.81
 
@@ -48,3 +45,21 @@ xlabel!("time step (t)")
 
 hidden_dim = 16
 fθ = Chain(Dense(length(x0), hidden_dim, sigmoid), Dense(hidden_dim, length(x0)))
+pekf = ExtendedParamKalmanFilter(fθ, Q, h, R)
+
+opt = ADAM(0.001)
+epochs = 500
+loss = run_ekf_gradient(pekf, s0, action_sequence, sim_measurements, opt, epochs)
+
+##
+grad_states = run_param_ekf(pekf, s0, action_sequence, sim_measurements)
+μgrad, Σgrad = unpack(grad_states)
+
+l = @layout [a{0.7h};grid(1, 3)]
+p1 = plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright, xlabel="time step (t)")
+p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright, xlabel="time step (t)")
+p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2] μgrad[2:end, 3]], label = ["learned p" "learned v" "learned a"], legend=:bottomright, xlabel="time step (t)")
+p2 = plot(1:epochs, loss, title="loss", xlabel="number of epochs")
+p3 = plot(time_step, (x[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error", xlabel="time step (t)")
+p4 = plot(time_step, (x[2:end, :]-μgrad[2:end, :]).^2, title="grad vs. sim error", xlabel="time step (t)")
+plot(p1, p2, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))

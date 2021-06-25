@@ -29,7 +29,7 @@ mutable struct ExtendedKalmanFilter{a<:Function, q<:Symmetric, b<:Function, r<:S
     R::r# measurement zero mean noise covariance
 end
 
-function ExtendedKalmanFilter(f, Q::AbstractMatrix, h::Function, R::AbstractMatrix)
+function ExtendedKalmanFilter(f::Function, Q::AbstractMatrix, h::Function, R::AbstractMatrix)
     return ExtendedKalmanFilter(f, Symmetric(Q), h, Symmetric(R))
 end
 
@@ -64,7 +64,7 @@ mutable struct ExtendedParamKalmanFilter{a, q<:Symmetric, b, r<:Symmetric} <: Ab
 end
 
 function ExtendedParamKalmanFilter(f, Q::AbstractMatrix, h, R::AbstractMatrix)
-    return ExtendedKalmanFilter(f, Symmetric(Q), h, Symmetric(R))
+    return ExtendedParamKalmanFilter(f, Symmetric(Q), h, Symmetric(R))
 end
 
 

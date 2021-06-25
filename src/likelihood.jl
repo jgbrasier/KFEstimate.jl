@@ -20,7 +20,7 @@ function kf_likelihood(θ, param_kf::ParamKalmanFilter, state_beliefs::AbstractA
 end
 
 
-function ekf_likelihood(param_kf::ExtendedParamKalmanFilter, state_beliefs::AbstractArray,
+function ekf_likelihood(param_ekf::ExtendedParamKalmanFilter, state_beliefs::AbstractArray,
     action_history::AbstractArray, measurement_history::AbstractArray)
     # drop initial s0 belief
     @assert length(action_history) == length(measurement_history)
@@ -32,9 +32,9 @@ function ekf_likelihood(param_kf::ExtendedParamKalmanFilter, state_beliefs::Abst
         x_hat = param_ekf.f(s.x) # predicted state prior
         F = ForwardDiff.jacobian(μ -> param_ekf.f(μ), s.x)
         P_hat = F*s.P*F' + param_ekf.Q # a priori state covariance
-        v = y - param_ekf.h(s.x) # measurement pre fit residual
+        v = y - param_ekf.h(x_hat) # measurement pre fit residual
         H = ForwardDiff.jacobian(μ -> param_ekf.h(μ), s.x)
-        S = H*s.P*H' + param_ekf.R # pre fit residual covariance
+        S = H*P_hat*H' + param_ekf.R # pre fit residual covariance
         l += 1/2*(v'*inv(S)*v + log(det(S)))
     end
     return l

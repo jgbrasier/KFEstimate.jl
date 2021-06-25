@@ -45,7 +45,10 @@ include("likelihood.jl")
 export
     run_simulation,
     run_filter,
-    run_param_filter
+    run_param_kf,
+    run_param_ekf,
+    run_kf_gradient,
+    run_ekf_gradient
 include("run.jl")
 
 export
