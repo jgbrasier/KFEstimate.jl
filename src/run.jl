@@ -49,7 +49,7 @@ function run_param_filter(θ, param_filter::AbstractParamFilter, s0::State, acti
     return states
 end
 
-function run_gradient(θ, param_kf::ParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
+function run_kf_gradient(θ, param_kf::ParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
     opt, epochs)
     """
     Run gradient descent on unknown parameters of a linear on non linear state space model (parametrized abstract filter).
