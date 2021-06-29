@@ -1,3 +1,4 @@
+
 /Manifest.toml
-/examples/linear_online.jl
-/examples/nonlinear_online.jl
+
+**/*online.jl
