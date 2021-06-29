@@ -13,11 +13,11 @@ end
 
 # non linear observation function only takes x as an input variable
 function h(x)
-    return [sin(x[1])]
+    return [sin(x[1]), sin(x[2])]
 end
 
-Q = 0.01*[dt^3/3 dt^2/2; dt^2/2 dt]
-R = 1.0*Matrix{Float64}(I, 1, 1)
+Q = 0.1*[dt^3/3 dt^2/2; dt^2/2 dt]
+R = 1.0*Matrix{Float64}(I, 2, 2)
 
 ekf = ExtendedKalmanFilter(f, Q, h, R);
 # run simulation
@@ -47,7 +47,7 @@ function fhat(θ, x, u)
 end
 
 function hhat(θ, x)
-    return [sin(x[1])]
+    return [sin(x[1]), sin(x[2])]
 end
 
 Rhat(θ) = R
@@ -56,10 +56,13 @@ Qhat(θ) = Q
 
 param_ekf = ExtendedParamKalmanFilter(fhat, Qhat, hhat, Rhat)
 
-opt = ADAM(0.0001)
-epochs = 100
+opt = ADAM(0.001)
+epochs = 400
 
-θ0 = [0.002]
+θ0 = [g+randn()]
+println(θ0)
+
+
 newθ, loss = run_ekf_gradient(θ0, param_ekf, s0, action_sequence, sim_measurements, opt, epochs)
 
 

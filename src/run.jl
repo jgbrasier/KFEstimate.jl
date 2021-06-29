@@ -76,7 +76,7 @@ function run_ekf_gradient(θ, param_ekf::ExtendedParamKalmanFilter, s0::State, a
     @assert length(action_history)==length(measurement_history)
     # Compute initial state esimates
     loss = []
-    for i in 1:epochs
+    for i in ProgressBar(1:epochs)
         states = run_param_filter(θ, param_ekf, s0, action_history, measurement_history)
         ∇, = gradient(theta -> ekf_likelihood(theta, param_ekf, states, action_history, measurement_history), θ)
         update!(opt, θ, ∇)
