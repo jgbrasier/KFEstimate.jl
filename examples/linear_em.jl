@@ -77,7 +77,7 @@ param_kf = ParamKalmanFilter(Ahat, Bhat, Qhat, Hhat, Rhat)
 
 θ0 = [1.1, 0.002, 4.0e-7]
 opt = ADAM(0.001)
-epochs = 500
+epochs = 300
 newθ, loss = run_kf_gradient(θ0, param_kf, s0, action_sequence, sim_measurements, opt, epochs)
 
 grad_states = run_param_filter(newθ, param_kf, s0, action_sequence, sim_measurements)

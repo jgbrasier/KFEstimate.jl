@@ -43,7 +43,7 @@ xlabel!("time step (t)")
 ##
 
 function fhat(θ, x, u)
-    return [x[1] + x[2]*θ[1]; x[2] - θ[2]*sin(x[1])]
+    return [x[1] + x[2]*dt; x[2] - θ[1]*dt*sin(x[1])]
 end
 
 function hhat(θ, x)
@@ -56,10 +56,10 @@ Qhat(θ) = Q
 
 param_ekf = ExtendedParamKalmanFilter(fhat, Qhat, hhat, Rhat)
 
-opt = ADAM(0.005)
+opt = ADAM(0.0001)
 epochs = 100
 
-θ0 = [0.001, 0.002]
+θ0 = [0.002]
 newθ, loss = run_ekf_gradient(θ0, param_ekf, s0, action_sequence, sim_measurements, opt, epochs)
 
 
