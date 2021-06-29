@@ -20,6 +20,7 @@ export
     ExtendedKalmanFilter,
     AbstractParamFilter,
     ParamKalmanFilter,
+    ExtendedParamKalmanFilter,
     State
 include("filters.jl")
 
@@ -32,19 +33,21 @@ export
     param_observation,
     correction,
     param_observation,
-    pre_fit,
     state_mse
 include("ekf_functions.jl")
 include("kf_functions.jl")
 
 export
-    kf_likelihood
+    kf_likelihood,
+    ekf_likelihood
 include("likelihood.jl")
 
 export
     run_simulation,
     run_filter,
-    run_param_filter
+    run_param_filter,
+    run_kf_gradient,
+    run_ekf_gradient
 include("run.jl")
 
 export

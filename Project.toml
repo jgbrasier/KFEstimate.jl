@@ -1,7 +1,7 @@
 name = "KFEstimate"
 uuid = "e85191dd-ff32-4876-9220-f2180024dfbb"
 authors = ["Jean-Guillaume Brasier"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -16,7 +16,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
-julia = "1"
+julia = "1.5"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

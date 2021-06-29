@@ -35,13 +35,12 @@ end
 function run_param_filter(θ, param_filter::AbstractParamFilter, s0::State, action_history::AbstractArray,
     measurement_history::AbstractArray)
     """
-    Run parametrized Filter on a measurement_history points, for a given action_history
+    Run parametrized Klaman Filter on a measurement_history points, for a given action_history
     Start from an initial state belief s0
     """
     @assert length(action_history) == length(measurement_history)
     states = [s0]
     for (u, y) in zip(action_history, measurement_history)
-        # filter.A += rand(Normal(0, 0.005), (3, 3))
         sp = param_prediction(θ, param_filter, states[end], u)
         sn = param_correction(θ, param_filter, sp, y)
         push!(states, sn)
@@ -49,21 +48,39 @@ function run_param_filter(θ, param_filter::AbstractParamFilter, s0::State, acti
     return states
 end
 
-function run_gradient(θ, param_kf::ParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
+function run_kf_gradient(θ, param_kf::ParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
     opt, epochs)
     """
     Run gradient descent on unknown parameters of a linear on non linear state space model (parametrized abstract filter).
     returns the found paramters after n epochs, and the associated loss function
     """
-    @assert length(action_sequence)==length(sim_measurements)
+    @assert length(action_history)==length(measurement_history)
     # Compute initial state esimates
     loss = []
-    ps = Flux.params(θ)
     for i in ProgressBar(1:epochs)
         states = run_param_filter(θ, param_kf, s0, action_history, measurement_history)
-        gs = gradient(()-> kf_likelihood(θ, param_kf, states, action_sequence, sim_measurements), ps)
-        update!(opt, ps, gs)
-        l = kf_likelihood(θ, param_kf, states0, action_sequence, sim_measurements)
+        ∇, = gradient(theta -> kf_likelihood(theta, param_kf, states, action_history, measurement_history), θ)
+        update!(opt, θ, ∇)
+        l = kf_likelihood(θ, param_kf, states, action_history, measurement_history)
+        push!(loss, l)
+    end
+    return θ, loss
+end
+
+function run_ekf_gradient(θ, param_ekf::ExtendedParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
+    opt, epochs)
+    """
+    Run gradient descent on unknown parameters of a linear on non linear state space model (parametrized abstract filter).
+    returns the found paramters after n epochs, and the associated loss function
+    """
+    @assert length(action_history)==length(measurement_history)
+    # Compute initial state esimates
+    loss = []
+    for i in ProgressBar(1:epochs)
+        states = run_param_filter(θ, param_ekf, s0, action_history, measurement_history)
+        ∇, = gradient(theta -> ekf_likelihood(theta, param_ekf, states, action_history, measurement_history), θ)
+        update!(opt, θ, ∇)
+        l = ekf_likelihood(θ, param_ekf, states, action_history, measurement_history)
         push!(loss, l)
     end
     return θ, loss

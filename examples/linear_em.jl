@@ -4,7 +4,6 @@ using Flux, Flux.Optimise
 using ProgressBars
 pathof(KFEstimate)
 
-##
 dt = 0.001
 A = [1.0 dt 1/2*dt^2; 0.0 1.0 dt; 0.0 0.0 1.0]
 B = [0.0; 0.0; 1.0]
@@ -58,7 +57,7 @@ loss = []
 θ_range = 0.9:0.001:1.1
 for i in θ_range
     θ_i = [i]
-    states = run_param_filter(θ_i, pkf, s0, action_sequence, sim_measurements)
+    states = run_param_kf(θ_i, pkf, s0, action_sequence, sim_measurements)
     l = kf_likelihood(θ_i, param_kf, states, action_sequence, sim_measurements)
     push!(loss, l)
 end
@@ -78,10 +77,10 @@ param_kf = ParamKalmanFilter(Ahat, Bhat, Qhat, Hhat, Rhat)
 
 θ0 = [1.1, 0.002, 4.0e-7]
 opt = ADAM(0.001)
-epochs = 500
-newθ, loss = run_gradient(θ0, pkf, s0, action_sequence, sim_measurements, opt, epochs)
+epochs = 300
+newθ, loss = run_kf_gradient(θ0, param_kf, s0, action_sequence, sim_measurements, opt, epochs)
 
-grad_states = run_param_filter(newθ, pkf, s0, action_sequence, sim_measurements)
+grad_states = run_param_filter(newθ, param_kf, s0, action_sequence, sim_measurements)
 μgrad, Σgrad = unpack(grad_states)
 
 l = @layout [a{0.7h};grid(1, 3)]
