@@ -6,13 +6,12 @@ pathof(KFEstimate)
 global dt = 0.001
 g = 9.81
 
+# non linear transition functions must always take x and u as variables regardless if they are used
 function f(x, u)
-    dx = x + dt*u
-    dx[1] = x[1] + x[2]*dt
-    dx[2] = x[2] - g*dt*sin(x[1])
-    return dx
+    return [x[1] + x[2]*dt; x[2] - g*dt*sin(x[1])]
 end
 
+# non linear observation function only takes x as an input variable
 function h(x)
     return [sin(x[1])]
 end
@@ -43,23 +42,35 @@ xlabel!("time step (t)")
 
 ##
 
-hidden_dim = 16
-fθ = Chain(Dense(length(x0), hidden_dim, sigmoid), Dense(hidden_dim, length(x0)))
-pekf = ExtendedParamKalmanFilter(fθ, Q, h, R)
+function fhat(θ, x, u)
+    return [x[1] + x[2]*θ[1]; x[2] - θ[2]*sin(x[1])]
+end
 
-opt = ADAM(0.001)
-epochs = 500
-loss = run_ekf_gradient(pekf, s0, action_sequence, sim_measurements, opt, epochs)
+function hhat(θ, x)
+    return [sin(x[1])]
+end
 
-##
-grad_states = run_param_ekf(pekf, s0, action_sequence, sim_measurements)
+Rhat(θ) = R
+Qhat(θ) = Q
+
+
+param_ekf = ExtendedParamKalmanFilter(fhat, Qhat, hhat, Rhat)
+
+opt = ADAM(0.005)
+epochs = 100
+
+θ0 = [0.001, 0.002]
+newθ, loss = run_ekf_gradient(θ0, param_ekf, s0, action_sequence, sim_measurements, opt, epochs)
+
+
+grad_states = run_param_filter(newθ, param_ekf, s0, action_sequence, sim_measurements)
 μgrad, Σgrad = unpack(grad_states)
 
 l = @layout [a{0.7h};grid(1, 3)]
-p1 = plot(time_step, [x[2:end, 1] x[2:end, 2] x[2:end, 3]], label = ["simulated p" "simulated v" "simulated a"], legend=:bottomright, xlabel="time step (t)")
-p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2] μ[2:end, 3]], label = ["filtered p" "filtered v" "filtered a"], legend=:bottomright, xlabel="time step (t)")
-p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2] μgrad[2:end, 3]], label = ["learned p" "learned v" "learned a"], legend=:bottomright, xlabel="time step (t)")
+p1 = plot(time_step, [θ[2:end, 1] θ[2:end, 2]], label = ["simulated θ" "simulated dθ"], legend=:bottomright, xlabel="time step (t)")
+p1 = plot!(time_step, [μ[2:end, 1] μ[2:end, 2] ], label = ["filtered θ" "filtered dθ"], legend=:bottomright, xlabel="time step (t)")
+p1 = plot!(time_step, [μgrad[2:end, 1] μgrad[2:end, 2]], label = ["learned θ" "learned dθ"], legend=:bottomright, xlabel="time step (t)")
 p2 = plot(1:epochs, loss, title="loss", xlabel="number of epochs")
-p3 = plot(time_step, (x[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error", xlabel="time step (t)")
-p4 = plot(time_step, (x[2:end, :]-μgrad[2:end, :]).^2, title="grad vs. sim error", xlabel="time step (t)")
+p3 = plot(time_step, (θ[2:end, :]-μ[2:end, :]).^2, title="KF vs. sim error", xlabel="time step (t)")
+p4 = plot(time_step, (θ[2:end, :]-μgrad[2:end, :]).^2, title="grad vs. sim error", xlabel="time step (t)")
 plot(p1, p2, p3, p4, layout=l, titlefont = font(12), size=(1000, 700))
