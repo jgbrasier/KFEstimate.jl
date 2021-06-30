@@ -30,7 +30,7 @@ Often, manually calculating the gradient ∇ of the log-likelihood ℒ is intrac
 
 ### Quick Start
 
-- Gaussian States of mean x and covariance P:
+- The package works with the States structure which encapsulates both the mean x and covariance P of a state
 ```julia
 s = State(x::AbstractVector, P::AbstractMatrix)
 ```
@@ -39,7 +39,7 @@ s = State(x::AbstractVector, P::AbstractMatrix)
 ```julia
 kf = KalmanFilter(A, B, Q, H, R)
 ```
-here A, B, H, Q, R are all of type `Matrix{Float64}`
+here A, B, H, Q, R are all of type `AbstractMatrix`
 
 - The package supports simulating measurements for a given action sequence (input vector)
 ```julia
