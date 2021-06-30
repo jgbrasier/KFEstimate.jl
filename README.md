@@ -37,9 +37,9 @@ s = State(x::AbstractVector, P::AbstractMatrix)
 
 - Setting up a Kalman Filter:
 ```julia
-kf = KalmanFilter(A, B, H, Q, R)
+kf = KalmanFilter(A, B, Q, H, R)
 ```
-here A, B, H, Q, R are all of type Matrix{Float64}
+here A, B, H, Q, R are all of type `Matrix{Float64}`
 
 - The package supports simulating measurements for a given action sequence (input vector)
 ```julia
@@ -54,7 +54,7 @@ filtered_states = run_filter(filter::AbstractFilter, s0::State, action_history::
 
 - Setting up an Parametrised Kalman Filter
 ```julia
-param_kf = ParamKalmanFilter(A, B, H, Q, R)
+param_kf = ParamKalmanFilter(A, B, Q, H, R)
 ```
 A, B, H, Q, R must all be functions with input θ. See `/examples/linear_em.jl`
 
@@ -66,3 +66,12 @@ A, B, H, Q, R must all be functions with input θ. See `/examples/linear_em.jl`
 
 
 ### Examples
+
+Parameter estimation for a classical dynamic model with control input where process matrix A is unknown: `example/linear_em.jl`
+
+![A matrix estimate](imgs/estimate_A.png)
+
+
+Parameter estimation for a non linear pendulum model with no control input where coefficients (g/L) of state space process are unknown: `example/non_linear.jl`
+
+![g/l estimate](imgs/estimate_gL.png)
