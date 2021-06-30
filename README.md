@@ -58,11 +58,12 @@ param_kf = ParamKalmanFilter(A, B, Q, H, R)
 ```
 A, B, H, Q, R must all be functions with input θ. See `/examples/linear_em.jl`
 
-- Running gradient descent on unknown parameters θ:
+- Running gradient descent on unknown parameters θ for a given number of epochs:
 ```julia
 θ, loss = run_kf_gradient(θ, param_kf::ParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
     opt, epochs)
 ```
+The package handily integrates [Flux Optimisers](https://fluxml.ai/Flux.jl/v0.4/training/optimisers.html).
 
 
 ### Examples
