@@ -67,10 +67,12 @@ A, B, H, Q, R must all be functions with input θ. See `/examples/linear_em.jl`
 
 ### Examples
 
+#### Linear
 Parameter estimation for a classical dynamic model with control input where process matrix A is unknown: `example/linear_em.jl`
 
 ![A matrix estimate](imgs/estimate_A.png)
 
+#### Non linear
 
 Parameter estimation for a non linear pendulum model with no control input where coefficients (g/L) of state space process are unknown: `example/non_linear.jl`
 
