@@ -9,11 +9,11 @@ If you are unfamiliar with Kalman Filtering see: [Kalman Filters](https://en.wik
 
 Let us consider a simple parametrised state space model:
 
-- $x_{t+1} = A(θ)*x_t + w_t$
-- $y_t = H(θ)*x_t + r_t$
+- <!-- $x_{t+1} = A(θ)*x_t + w_t$ --> <img style="transform: translateY(0.1em); background: white;" src="https://render.githubusercontent.com/render/math?math=x_%7Bt%2B1%7D%20%3D%20A(%CE%B8)*x_t%20%2B%20w_t">
+- <!-- $y_t = H(θ)*x_t + r_t$ --> <img style="transform: translateY(0.1em); background: white;" src="https://render.githubusercontent.com/render/math?math=y_t%20%3D%20H(%CE%B8)*x_t%20%2B%20r_t">
 
 where:
-- $w_t↝𝒩(0, Q(θ))$, and $r_t↝𝒩(0, R(θ))$
+- <!-- $w_t↝𝒩(0, Q(θ))$, and $r_t↝𝒩(0, R(θ))$ --> <img style="transform: translateY(0.1em); background: white;" src="https://render.githubusercontent.com/render/math?math=w_t%E2%86%9D%F0%9D%92%A9(0%2C%20Q(%CE%B8))%24%2C%20and%20%24r_t%E2%86%9D%F0%9D%92%A9(0%2C%20R(%CE%B8))">
 - $A(θ)$ and $H(θ)$ are the process and measurement matrices respectively.
 
 Here $θ = (θ_1, ..., θ_n )$ represents unknown parameters in our model that we would like to estimate.
