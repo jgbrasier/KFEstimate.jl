@@ -16,5 +16,15 @@ where:
 - $Cov(w_t)↝𝒩(0, Q(θ))$, and $Cov(r_t)↝𝒩(0, R(θ))$
 - $A(θ)$ and $H(θ)$ are the process and measurement matrices respectively.
 
+Here $θ = (θ_1, ..., θ_n )$ represents unknown parameters in our model that we would like to estimate.
 
 ### Parameter Estimation
+
+Traditional parameter estimation in SSMs is done using MCMC methods or [EM Algorithms](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm).
+
+Our gradient based approach consists of computing the log-likelihood of our posterior estimation and then minimizing it using stochastic gradient descent.
+
+At each epoch e:
+- compute $ℒ(θ)= -\frac{1}{2}\sum_{k=1}^{T}$
+
+### Automatic Differentiation (AD)
