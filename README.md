@@ -41,7 +41,7 @@ kf = KalmanFilter(A, B, Q, H, R)
 ```
 here A, B, H, Q, R are all of type `AbstractMatrix`
 
-- The package supports simulating measurements for a given action sequence (input vector)
+- The package supports simulating measurements for a given action sequence (input vector), with initial estimate x0.
 ```julia
 sim_states, sim_measurements = run_simulation(filter::AbstractFilter, x0::AbstractVector, action_seq::AbstractArray)
 ```
@@ -52,7 +52,7 @@ filtered_states = run_filter(filter::AbstractFilter, s0::State, action_history::
     measurement_history::AbstractArray)
 ```
 
-- Setting up an Parametrised Kalman Filter
+- Setting up a Parametrised Kalman Filter
 ```julia
 param_kf = ParamKalmanFilter(A, B, Q, H, R)
 ```
@@ -64,6 +64,8 @@ A, B, H, Q, R must all be functions with input θ. See `/examples/linear_em.jl`
     opt, epochs)
 ```
 The package handily integrates [Flux Optimisers](https://fluxml.ai/Flux.jl/v0.4/training/optimisers.html).
+
+Idem for non-linear functions and Extended Kalman Filtering. 
 
 
 ### Examples
