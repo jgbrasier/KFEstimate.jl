@@ -56,7 +56,7 @@ filtered_states = run_filter(filter::AbstractFilter, s0::State, action_history::
 ```julia
 param_kf = ParamKalmanFilter(A, B, Q, H, R)
 ```
-A, B, H, Q, R must all be functions with input θ. See `/examples/linear_em.jl`
+A, B, H, Q, R must all be functions with input θ. See `/examples/linear.jl`
 
 - Running gradient descent on unknown parameters θ for a given number of epochs:
 ```julia
