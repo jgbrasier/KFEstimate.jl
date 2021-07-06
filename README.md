@@ -65,13 +65,13 @@ A, B, H, Q, R must all be functions with input θ. See `/examples/linear_em.jl`
 ```
 The package handily integrates [Flux Optimisers](https://fluxml.ai/Flux.jl/v0.4/training/optimisers.html).
 
-Idem for non-linear functions and Extended Kalman Filtering. 
+Idem for non-linear functions and Extended Kalman Filtering.
 
 
 ### Examples
 
 #### Linear
-Parameter estimation for a classical dynamic model with control input where process matrix A is unknown: `example/linear_em.jl`
+Parameter estimation for a classical dynamic model with control input where process matrix A is unknown: `example/linear.jl`
 
 ![A matrix estimate](imgs/estimate_A.png)
 
