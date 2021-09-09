@@ -32,7 +32,7 @@ export
     observation,
     param_observation,
     correction,
-    param_observation,
+    param_correction,
     state_mse
 include("ekf_functions.jl")
 include("kf_functions.jl")
