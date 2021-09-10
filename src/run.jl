@@ -85,3 +85,29 @@ function run_ekf_gradient(θ, param_ekf::ExtendedParamKalmanFilter, s0::State, a
     end
     return θ, loss
 end
+
+function run_online_kf_gradient(θ, param_kf::ParamKalmanFilter, s0::State, action_history::AbstractArray, measurement_history::AbstractArray,
+    opt, epochs)
+    """
+    Run online gradient descent on unknown parameters of a linear state space model (parametrized abstract filter).
+    returns the found paramters after n epochs.
+    """
+    @assert length(action_history)==length(measurement_history)
+    # Compute initial state esimates
+    # θgt = [1.0 dt 1/2*dt^2]
+    # err = [θgt.-θ]
+    states = [s0]
+    for (u, y) in zip(action_history, measurement_history)
+        l = 0
+        s = states[end]
+        for i in 1:epochs
+            ∇, = gradient(θ -> online_kf_likelihood(θ, param_kf, s, u, y), θ)
+            update!(opt, θ, ∇)
+        end
+        # push!(err, (θgt.-θ).^2)
+        sp = param_prediction(θ, param_kf, s, u)
+        sn = param_correction(θ, param_kf, sp, y)
+        push!(states, sn)
+    end
+    return states #, err
+end

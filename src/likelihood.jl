@@ -39,3 +39,12 @@ function ekf_likelihood(θ, param_ekf::ExtendedParamKalmanFilter, state_beliefs:
     end
     return l
 end
+
+function online_kf_likelihood(θ, param_kf::ParamKalmanFilter, s::State, u:: AbstractArray, y::AbstractArray)
+    x_hat = param_kf.A(θ)*s.x + param_kf.B(θ)*u # predicted state prior
+    P_hat = param_kf.A(θ)*s.P*param_kf.A(θ)' + param_kf.Q(θ) # a priori state covariance
+    v = y - param_kf.H(θ)*x_hat # measurement pre fit residual
+    S = param_kf.H(θ)*P_hat*param_kf.H(θ)' + param_kf.R(θ) # pre fit residual covariance
+    l = 1/2*(v'*inv(S)*v + log(det(S)))
+    return l
+end

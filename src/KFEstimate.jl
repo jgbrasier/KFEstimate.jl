@@ -40,6 +40,8 @@ include("kf_functions.jl")
 export
     kf_likelihood,
     ekf_likelihood
+    online_kf_likihood,
+
 include("likelihood.jl")
 
 export
@@ -47,7 +49,8 @@ export
     run_filter,
     run_param_filter,
     run_kf_gradient,
-    run_ekf_gradient
+    run_ekf_gradient,
+    run_online_kf_gradient
 include("run.jl")
 
 export
